@@ -14,7 +14,6 @@ namespace Completed
 			public int minimum; 			//Minimum value for our Count class.
 			public int maximum; 			//Maximum value for our Count class.
 			
-			
 			//Assignment constructor.
 			public Count (int min, int max)
 			{
@@ -22,6 +21,19 @@ namespace Completed
 				maximum = max;
 			}
 		}
+
+        [Serializable]
+        public class PlacedTile
+        {
+            public GameObject go;   // Reference to game object at location
+            public int tileIdx;     // index of tile
+
+            public PlacedTile(GameObject g, int idx)
+            {
+                go = g;
+                tileIdx = idx;
+            }
+        }
 
 		public int columns = 8; 										//Number of columns in our game board.
 		public int rows = 8;											//Number of rows in our game board.
@@ -35,6 +47,7 @@ namespace Completed
 		public GameObject[] outerWallTiles;								//Array of outer tile prefabs.
 
         public GameObject[] InstantiatedFloorTiles;                     // References to instantiated floor tiles
+        public List<PlacedTile> PlacedTiles;
 
 		private Transform boardHolder;									//A variable to store a reference to the transform of our Board object.
 		private List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
@@ -216,6 +229,25 @@ namespace Completed
         public Vector2 GetPositionFromIndex(int idx)
         {
             return new Vector2(idx / columns, idx % rows);
+        }
+
+        public bool IsTileFreeAtIndex(int idx)
+        {
+            for (int i = 0; i < PlacedTiles.Count; i++)
+            {
+                if (PlacedTiles[i].tileIdx == idx)
+                    return false;
+            }
+            return true;
+        }
+
+        public void PlaceObjectAtIndex(int idx, GameObject toSpawn, Transform parent)
+        {
+            GameObject g = GameObject.Instantiate(toSpawn);
+            g.transform.position = GetPositionFromIndex(idx);
+            g.transform.parent = parent;
+            // Store placed tile
+            PlacedTiles.Add(new PlacedTile(g, idx));
         }
 
         public void Update()
