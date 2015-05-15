@@ -8,7 +8,7 @@ namespace Completed
 	
 	public class GameManager : MonoBehaviour
 	{
-		public float levelStartDelay = 2f;						//Time to wait before starting level, in seconds.
+		public float levelStartDelay = 0.0f;					//Time to wait before starting level, in seconds.
 		public float turnDelay = 0.1f;							//Delay between each Player turn.
 		public int playerFoodPoints = 100;						//Starting value for Player food points.
 		public static GameManager instance = null;				//Static instance of GameManager which allows it to be accessed by any other script.
@@ -21,7 +21,7 @@ namespace Completed
 		private int level = 1;									//Current level number, expressed in game as "Day 1".
 		private List<Enemy> enemies;							//List of all Enemy units, used to issue them move commands.
 		private bool enemiesMoving;								//Boolean to check if enemies are moving.
-		private bool doingSetup = true;							//Boolean to check if we're setting up board, prevent Player from moving during setup.
+		private bool doingSetup = false;							//Boolean to check if we're setting up board, prevent Player from moving during setup.
 		
 		
 		
@@ -66,22 +66,22 @@ namespace Completed
 		void InitGame()
 		{
 			//While doingSetup is true the player can't move, prevent player from moving while title card is up.
-			doingSetup = true;
+			//doingSetup = true;
 			
-			//Get a reference to our image LevelImage by finding it by name.
-			levelImage = GameObject.Find("LevelImage");
+            ////Get a reference to our image LevelImage by finding it by name.
+            //levelImage = GameObject.Find("LevelImage");
 			
-			//Get a reference to our text LevelText's text component by finding it by name and calling GetComponent.
-			levelText = GameObject.Find("LevelText").GetComponent<Text>();
+            ////Get a reference to our text LevelText's text component by finding it by name and calling GetComponent.
+            //levelText = GameObject.Find("LevelText").GetComponent<Text>();
 			
-			//Set the text of levelText to the string "Day" and append the current level number.
-			levelText.text = "Day " + level;
+            ////Set the text of levelText to the string "Day" and append the current level number.
+            //levelText.text = "Day " + level;
 			
-			//Set levelImage to active blocking player's view of the game board during setup.
-			levelImage.SetActive(true);
+            ////Set levelImage to active blocking player's view of the game board during setup.
+            //levelImage.SetActive(true);
 			
-			//Call the HideLevelImage function with a delay in seconds of levelStartDelay.
-			Invoke("HideLevelImage", levelStartDelay);
+            ////Call the HideLevelImage function with a delay in seconds of levelStartDelay.
+            //Invoke("HideLevelImage", levelStartDelay);
 			
 			//Clear any Enemy objects in our List to prepare for next level.
 			enemies.Clear();
@@ -93,14 +93,14 @@ namespace Completed
 		
 		
 		//Hides black image used between levels
-		void HideLevelImage()
-		{
-			//Disable the levelImage gameObject.
-			levelImage.SetActive(false);
+        //void HideLevelImage()
+        //{
+        //    //Disable the levelImage gameObject.
+        //    levelImage.SetActive(false);
 			
-			//Set doingSetup to false allowing player to move again.
-			doingSetup = false;
-		}
+        //    //Set doingSetup to false allowing player to move again.
+        //    doingSetup = false;
+        //}
 		
 		//Update is called every frame.
 		void Update()
@@ -127,13 +127,13 @@ namespace Completed
 		public void GameOver()
 		{
 			//Set levelText to display number of levels passed and game over message
-			levelText.text = "After " + level + " days, you starved.";
+			//levelText.text = "After " + level + " days, you starved.";
 			
 			//Enable black background image gameObject.
-			levelImage.SetActive(true);
+			//levelImage.SetActive(true);
 			
 			//Disable this GameManager.
-			enabled = false;
+			//enabled = false;
 		}
 		
 		//Coroutine to move enemies in sequence.
@@ -167,6 +167,11 @@ namespace Completed
 			//Enemies are done moving, set enemiesMoving to false.
 			enemiesMoving = false;
 		}
+
+        public BoardManager GetBoardScript()
+        {
+            return boardScript;
+        }
 	}
 }
 
