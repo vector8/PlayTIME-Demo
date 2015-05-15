@@ -206,7 +206,7 @@ namespace Completed
             int y = Mathf.FloorToInt(wsMousePos.y);
 
             // Calculate the index into the InstantiatedFloorTiles array
-            int wsMouseGridIdx = (x * (columns) + y);
+            int wsMouseGridIdx = (x * (rows) + y);
 
             //Debug.Log("ws mouse = " + wsMousePos.x + ", " + wsMousePos.y + "   floor mouse = " + x + ", " + y + "   idx = " + wsMouseGridIdx);
 
@@ -248,6 +248,25 @@ namespace Completed
             g.transform.parent = parent;
             // Store placed tile
             PlacedTiles.Add(new PlacedTile(g, idx));
+        }
+
+        public void RemoveObjectAtIndex(int idx)
+        {
+            for (int i = 0; i < PlacedTiles.Count; i++)
+            {
+                if (PlacedTiles[i].tileIdx == idx)
+                {
+                    DestroyImmediate(PlacedTiles[i].go);
+                    PlacedTiles.RemoveAt(i);
+                    return;
+                }
+            }
+        }
+
+        public void ReplaceObjectAtIndex(int idx, GameObject toReplace, Transform parent)
+        {
+            RemoveObjectAtIndex(idx);
+            PlaceObjectAtIndex(idx, toReplace, parent);
         }
 
         public void Update()
