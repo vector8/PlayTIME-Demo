@@ -23,9 +23,10 @@ public class LevelDesignTIME : MonoBehaviour
         // Key will be replaced with rfid values
         for (int i = 0; i < prefabs.Length; i++)
         {
-            database.Add(i, prefabs[i]);
-            prefabs[i] = Instantiate(prefabs[i]);
-            prefabs[i].SetActive(false);
+            // Instantiated them for displaying purposes only
+            GameObject go = Instantiate(prefabs[i]);
+            database.Add(i, go);
+            go.SetActive(false);
         }
 
         grid = Completed.GameManager.instance.GetBoardScript();
@@ -37,29 +38,35 @@ public class LevelDesignTIME : MonoBehaviour
 	void Update ()
     {
         int gridIdx = grid.GetTileIndexInGridAtPoint(Input.mousePosition, true);
-        Debug.Log(gridIdx);
 
         if (gridIdx > 0)
         {
-            prefabs[activeKey].SetActive(true);
+            database[activeKey].SetActive(true);
             Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-            prefabs[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+            database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
 
             if (Input.GetMouseButtonUp(0))
             {
-                GameObject g = GameObject.Instantiate(database[activeKey]);
-                g.transform.position = prefabs[activeKey].transform.position;
+                // Check if grid spot is free
+                if (grid.IsTileFreeAtIndex(gridIdx))
+                {
+                    grid.PlaceObjectAtIndex(gridIdx, database[activeKey], this.transform);
+                }
+                else
+                {
+                    // Ask user if they want to replace
+                    Debug.Log("Not free");
+                }
             }
         }
 
-        if (Input.GetKeyUp(KeyCode.UpArrow))
+        if (Input.GetKeyUp(KeyCode.RightShift))
         {
-            prefabs[activeKey].SetActive(false);
+            database[activeKey].SetActive(false);
             activeKey++;
             activeKey = activeKey % 3;
-            prefabs[activeKey].SetActive(true);
+            database[activeKey].SetActive(true);
         }
-        Debug.Log(activeKey);
 	}
 
     // Description:
