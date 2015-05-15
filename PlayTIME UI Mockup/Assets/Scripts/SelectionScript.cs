@@ -11,6 +11,9 @@ public class SelectionScript : MonoBehaviour
 	public GameObject currentPanel;
 	public GameObject selectedActionsPanel;
 
+	public int xspacing;
+	public int xoffset;
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -20,8 +23,6 @@ public class SelectionScript : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		if(selectedActions.Count > 0)
-			print (((GameObject)selectedActions[0]).transform.position.ToString());
 	}
 
 	public void tabSelected(Button newTab)
@@ -60,6 +61,11 @@ public class SelectionScript : MonoBehaviour
 			}
 
 			selectedActions.Remove(button);
+
+			for(int i = 0; i < selectedActions.Count; i++)
+			{
+				((GameObject)selectedActions[i]).transform.position = getNewActionPosition(i);
+			}
 			
 			Destroy(button);
 		}
@@ -86,6 +92,6 @@ public class SelectionScript : MonoBehaviour
 
 	private Vector3 getNewActionPosition(int count)
 	{
-		return new Vector3(90 + count%6 * 118, 616 - count/6 * 69);
+		return new Vector3(xoffset + count%6 * xspacing, 616 - count/6 * 69);
 	}
 }
