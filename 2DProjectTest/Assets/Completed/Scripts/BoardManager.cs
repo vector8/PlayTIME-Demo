@@ -3,10 +3,8 @@ using System;
 using System.Collections.Generic; 		//Allows us to use Lists.
 using Random = UnityEngine.Random; 		//Tells Random to use the Unity Engine random number generator.
 
-namespace Completed
-	
+namespace Completed	
 {
-	
 	public class BoardManager : MonoBehaviour
 	{
 		// Using Serializable allows us to embed a class with sub properties in the inspector.
@@ -24,8 +22,7 @@ namespace Completed
 				maximum = max;
 			}
 		}
-		
-		
+
 		public int columns = 8; 										//Number of columns in our game board.
 		public int rows = 8;											//Number of rows in our game board.
 		public Count wallCount = new Count (5, 9);						//Lower and upper limit for our random number of walls per level.
@@ -36,11 +33,12 @@ namespace Completed
 		public GameObject[] foodTiles;									//Array of food prefabs.
 		public GameObject[] enemyTiles;									//Array of enemy prefabs.
 		public GameObject[] outerWallTiles;								//Array of outer tile prefabs.
-		
+
+        public GameObject[] InstantiatedFloorTiles;                     // References to instantiated floor tiles
+
 		private Transform boardHolder;									//A variable to store a reference to the transform of our Board object.
 		private List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
-		
-		
+
 		//Clears our list gridPositions and prepares it to generate a new board.
 		void InitialiseList ()
 		{
@@ -65,24 +63,34 @@ namespace Completed
 		{
 			//Instantiate Board and set boardHolder to its transform.
 			boardHolder = new GameObject ("Board").transform;
-			
+
+            // Alloc memory for floor tile refs
+            InstantiatedFloorTiles = new GameObject[((rows) * (columns))];
+
 			//Loop along x axis, starting from -1 (to fill corner) with floor or outerwall edge tiles.
-			for(int x = -1; x < columns + 1; x++)
+			for(int x = -1; x <= columns; x++)
 			{
 				//Loop along y axis, starting from -1 to place floor or outerwall tiles.
-				for(int y = -1; y < rows + 1; y++)
+				for(int y = -1; y <= rows; y++)
 				{
 					//Choose a random tile from our array of floor tile prefabs and prepare to instantiate it.
 					GameObject toInstantiate = floorTiles[Random.Range (0,floorTiles.Length)];
 					
 					//Check if we current position is at board edge, if so choose a random outer wall prefab from our array of outer wall tiles.
-					if(x == -1 || x == columns || y == -1 || y == rows)
+                    bool border = (x == -1 || x == columns || y == -1 || y == rows);
+
+                    if (border)
 						toInstantiate = outerWallTiles [Random.Range (0, outerWallTiles.Length)];
 					
 					//Instantiate the GameObject instance using the prefab chosen for toInstantiate at the Vector3 corresponding to current grid position in loop, cast it to GameObject.
-					GameObject instance =
-						Instantiate (toInstantiate, new Vector3 (x, y, 0f), Quaternion.identity) as GameObject;
-					
+					GameObject instance = Instantiate (toInstantiate, new Vector3 (x, y, 0f), Quaternion.identity) as GameObject;
+
+                    if (!border)
+                    {
+                        int InstfloorIdx = (((x) * columns) + (y));
+                        InstantiatedFloorTiles[InstfloorIdx] = instance;
+                    }
+
 					//Set the parent of our newly instantiated object instance to boardHolder, this is just organizational to avoid cluttering hierarchy.
 					instance.transform.SetParent (boardHolder);
 				}
@@ -138,19 +146,94 @@ namespace Completed
 			InitialiseList ();
 			
 			//Instantiate a random number of wall tiles based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (wallTiles, wallCount.minimum, wallCount.maximum);
+			//LayoutObjectAtRandom (wallTiles, wallCount.minimum, wallCount.maximum);
 			
 			//Instantiate a random number of food tiles based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (foodTiles, foodCount.minimum, foodCount.maximum);
+			//LayoutObjectAtRandom (foodTiles, foodCount.minimum, foodCount.maximum);
 			
 			//Determine number of enemies based on current level number, based on a logarithmic progression
-			int enemyCount = (int)Mathf.Log(level, 2f);
+			//int enemyCount = (int)Mathf.Log(level, 2f);
 			
 			//Instantiate a random number of enemies based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (enemyTiles, enemyCount, enemyCount);
+			//LayoutObjectAtRandom (enemyTiles, enemyCount, enemyCount);
 			
 			//Instantiate the exit tile in the upper right hand corner of our game board
 			Instantiate (exit, new Vector3 (columns - 1, rows - 1, 0f), Quaternion.identity);
 		}
+
+        int lastMouseIdx = 0;
+
+        // Description:
+        // Creates a Vector2 using the x,y from input Vector 3.
+        // Calls GetTileIndexInGridAtPoint(Vector2)
+        // Arguments:
+        // Vector3 point - to test for
+        // bool worldSpace - set to true if point is in worldspace
+        // Returns:
+        // -1 if point is not in grid, else index into the InstantiatedFloorTiles array
+        public int GetTileIndexInGridAtPoint(Vector3 p, bool worldSpace)
+        {
+            return GetTileIndexInGridAtPoint(new Vector2(p.x, p.y), worldSpace);
+        }
+
+        // Description:
+        // Converts point into world space if it isn't already,
+        // tests if that ws point is in the grid.
+        // Arguments:
+        // See GetTileIndexInGridAtPoint(Vector3 p, bool worldSpace)
+        // Returns:
+        // -1 if point is not in grid, else index into the InstantiatedFloorTiles array
+        public int GetTileIndexInGridAtPoint(Vector2 p, bool worldSpace)
+        {
+            int retIdx = -1;
+
+            Vector3 wsMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            wsMousePos += new Vector3(0.5f, 0.5f, 0.0f);
+            int x = Mathf.FloorToInt(wsMousePos.x);
+            int y = Mathf.FloorToInt(wsMousePos.y);
+
+            // Calculate the index into the InstantiatedFloorTiles array
+            int wsMouseGridIdx = (x * (columns) + y);
+
+            //Debug.Log("ws mouse = " + wsMousePos.x + ", " + wsMousePos.y + "   floor mouse = " + x + ", " + y + "   idx = " + wsMouseGridIdx);
+
+            // Test conditions
+            if (x < 0 || y < 0)
+                return retIdx;
+
+            if (x >= rows || y >= rows)
+                return retIdx;
+
+            if (wsMouseGridIdx < (columns * rows))
+                retIdx = wsMouseGridIdx;
+
+            return retIdx;
+        }
+
+        // Description:
+        // Returns the world space position of the tile
+        // at the specified index
+        public Vector2 GetPositionFromIndex(int idx)
+        {
+            return new Vector2(idx / columns, idx % rows);
+        }
+
+        public void Update()
+        {
+            // GetTileIndexInGridAtPoint test 
+            /*
+            int idx = GetTileIndexInGridAtPoint(Input.mousePosition, false);
+
+            if (idx >= 0)
+            {
+                InstantiatedFloorTiles[idx].SetActive(false);
+                if (lastMouseIdx != idx)
+                {
+                    InstantiatedFloorTiles[lastMouseIdx].SetActive(true);
+                    lastMouseIdx = idx;
+                }
+            }
+            */
+        }
 	}
 }

@@ -2,3 +2,7 @@ syntax: glob
 PlayTIME UI Mockup/Library/*
 PlayTIME UI Mockup/HTML5 Build/*
 2DProjectTest/Library/*
+2DProjectTest/Temp/*
+2DProjectTest/Assets/UnityVS/*
+2DProjectTest/obj/*
+2DProjectTest/UnityVS*
