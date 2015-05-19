@@ -48,6 +48,7 @@ namespace Completed
 
         public GameObject[] InstantiatedFloorTiles;                     // References to instantiated floor tiles
         public List<PlacedTile> PlacedTiles;
+        public List<Vector3> PlacedTilesRevert;                      // Position of objects in PlacedTiles will be set to PlacedTilesRevert when preview ends
 
 		private Transform boardHolder;									//A variable to store a reference to the transform of our Board object.
 		private List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
@@ -267,6 +268,23 @@ namespace Completed
         {
             RemoveObjectAtIndex(idx);
             PlaceObjectAtIndex(idx, toReplace, parent);
+        }
+
+        public void SetRevert()
+        {
+            PlacedTilesRevert.Clear();
+            for (int i = 0; i < PlacedTiles.Count; i++)
+            {
+                PlacedTilesRevert.Add(PlacedTiles[i].go.transform.position);
+            }
+        }
+
+        public void Revert()
+        {
+            for (int i = 0; i < PlacedTiles.Count; i++)
+            {
+                PlacedTiles[i].go.transform.position = PlacedTilesRevert[i];
+            }
         }
 
         public void Update()

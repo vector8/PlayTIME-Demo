@@ -23,6 +23,8 @@ public class LevelDesignTIME : MonoBehaviour
     private bool lockPositions = false;
     private int lockedPosition;
 
+    private bool previewMode = false;
+
     // Current or latest rfid tag read.
     // Value of -1 means none active
     public int activeKey = -1;
@@ -149,6 +151,19 @@ public class LevelDesignTIME : MonoBehaviour
             activeKey++;
             activeKey = activeKey % prefabs.Length;
             database[activeKey].SetActive(true);
+        }
+
+        if (Input.GetKeyUp(KeyCode.P))
+        {
+            previewMode = !previewMode;
+            if (previewMode)
+            {
+                grid.SetRevert();
+            }
+            else
+            {
+                grid.Revert();
+            }
         }
 
         LastMousePosition = Input.mousePosition;
