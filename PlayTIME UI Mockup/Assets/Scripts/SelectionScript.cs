@@ -14,6 +14,9 @@ public class SelectionScript : MonoBehaviour
 	public int xspacing;
 	public int xoffset;
 
+	public int yspacing;
+	public int yoffset;
+
 	// Use this for initialization
 	void Start ()
 	{
@@ -92,6 +95,10 @@ public class SelectionScript : MonoBehaviour
 
 	private Vector3 getNewActionPosition(int count)
 	{
-		return new Vector3(xoffset + count%6 * xspacing, 616 - count/6 * 69);
+		int buttonsWide = (Screen.width - xoffset) / xspacing;
+		if(buttonsWide < 1)
+			buttonsWide = 1;
+
+		return new Vector3(xoffset + count%buttonsWide * xspacing, Screen.height - yoffset - count/buttonsWide * yspacing);
 	}
 }
