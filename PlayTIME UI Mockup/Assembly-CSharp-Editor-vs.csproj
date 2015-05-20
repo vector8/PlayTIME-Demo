@@ -54,6 +54,9 @@
  <Reference Include="UnityEditor.UI">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/Editor/UnityEditor.UI.dll</HintPath>
  </Reference>
+ <Reference Include="Phidget21.NET">
+ <HintPath>C:/Users/100538673/Documents/Courses/Summer 2015 Internship/Research Project/PlayTIME Demo/PlayTIME UI Mockup/Assets/Plugins/Phidget21.NET.dll</HintPath>
+ </Reference>
  <Reference Include="UnityEditor.Graphs">
  <HintPath>C:/Program Files/Unity/Editor/Data/Managed/UnityEditor.Graphs.dll</HintPath>
  </Reference>

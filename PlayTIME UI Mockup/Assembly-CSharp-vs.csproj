@@ -50,12 +50,16 @@
      <Compile Include="Assets\Scripts\AddFrames.cs" />
      <Compile Include="Assets\Scripts\AnimationAdded.cs" />
      <Compile Include="Assets\Scripts\AnimationSelection.cs" />
+     <Compile Include="Assets\Scripts\PhidgetsController.cs" />
      <Compile Include="Assets\Scripts\ResetScene.cs" />
      <Compile Include="Assets\Scripts\SelectionScript.cs" />
      <Compile Include="Assets\Scripts\UIControlScript.cs" />
      <None Include="Assets\Standard Assets\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
+ </Reference>
+ <Reference Include="Phidget21.NET">
+ <HintPath>C:/Users/100538673/Documents/Courses/Summer 2015 Internship/Research Project/PlayTIME Demo/PlayTIME UI Mockup/Assets/Plugins/Phidget21.NET.dll</HintPath>
  </Reference>
  <Reference Include="UnityEditor.iOS.Extensions.Xcode">
  <HintPath>C:/Program Files/Unity/Editor/Data/PlaybackEngines/iossupport/UnityEditor.iOS.Extensions.Xcode.dll</HintPath>
