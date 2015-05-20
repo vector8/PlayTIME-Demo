@@ -1,11 +1,9 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\PhidgetsController.cs">
+  <MonoDevelop.Ide.Workspace />
+  <MonoDevelop.Ide.Workbench ActiveDocument="..\2DProjectTest\Assets\Scripts\LevelDesignTIME.cs">
     <Files>
-      <File FileName="Assets\Scripts\ResetScene.cs" Line="17" Column="3" />
-      <File FileName="Assets\Scripts\SelectionScript.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\UIControlScript.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\PhidgetsController.cs" Line="33" Column="19" />
+      <File FileName="..\2DProjectTest\Assets\Editor\CameraViewWindow.cs" Line="73" Column="35" />
+      <File FileName="..\2DProjectTest\Assets\Scripts\LevelDesignTIME.cs" Line="39" Column="58" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

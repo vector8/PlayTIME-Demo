@@ -13,6 +13,9 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject MouseModeActiveText;
     public Vector2 PlacementUIOffsetInPixels;
 
+	public Vector2 topScreenResolution;
+	public Vector2 bottomScreenResolution;
+
     private Vector3 LastMousePosition;
 
     // Reference to the board (Grid)
@@ -32,6 +35,10 @@ public class LevelDesignTIME : MonoBehaviour
 	// Use this for initialization
 	void Start () 
     {
+		Screen.SetResolution((int)topScreenResolution.x + (int)bottomScreenResolution.x - 1, 
+		                     (int)topScreenResolution.y + (int)bottomScreenResolution.y - 1, 
+		                     false);
+
 	    // Add things to the data base
         // Key will be replaced with rfid values
         for (int i = 0; i < prefabs.Length; i++)
