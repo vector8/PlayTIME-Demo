@@ -88,6 +88,9 @@
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>
+ <Reference Include="Phidget21.NET">
+ <HintPath>C:/Users/100538673/Documents/Courses/Summer 2015 Internship/Research Project/PlayTIME Demo/PlayTIME UI Mockup/Assets/Plugins/Phidget21.NET.dll</HintPath>
+ </Reference>
  <Reference Include="UnityEditor.iOS.Extensions.Xcode">
  <HintPath>C:/Program Files/Unity/Editor/Data/PlaybackEngines/iossupport/UnityEditor.iOS.Extensions.Xcode.dll</HintPath>
  </Reference>
