@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic; 		//Allows us to use Lists.
 using Random = UnityEngine.Random; 		//Tells Random to use the Unity Engine random number generator.
+using TouchScript.Gestures;
 
 namespace Completed	
 {
@@ -77,6 +78,8 @@ namespace Completed
 		{
 			//Instantiate Board and set boardHolder to its transform.
 			boardHolder = new GameObject ("Board").transform;
+			boardHolder.gameObject.AddComponent<PressGesture>();
+			boardHolder.gameObject.AddComponent<ReleaseGesture>();
 
             // Alloc memory for floor tile refs
             InstantiatedFloorTiles = new GameObject[((rows) * (columns))];

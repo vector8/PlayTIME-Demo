@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TouchScript.Gestures;
 
 public class LevelDesignTIME : MonoBehaviour 
 {
@@ -59,6 +61,14 @@ public class LevelDesignTIME : MonoBehaviour
             MouseModeActiveText.SetActive(true);
         else
             MouseModeActiveText.SetActive(false);
+
+		PlacementUI.transform.Find("Place").Find("Place").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
+		PlacementUI.transform.Find("ReplaceRemove").Find("Replace").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
+		PlacementUI.transform.Find("ReplaceRemove").Find("Remove").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
+
+		GameObject board = GameObject.Find("Board");
+		board.GetComponent<PressGesture>().Pressed += pressedHandler;
+		board.GetComponent<ReleaseGesture>().Released += releasedHandler;
 	}
 	
     // Description:
@@ -112,18 +122,10 @@ public class LevelDesignTIME : MonoBehaviour
             }
             else // Touch mode
             {
-                // If mouse is moving, hide UI
-                if (Vector3.Magnitude(Input.mousePosition - LastMousePosition) > 0.0f)
-                {
-                    PlacementUI.SetActive(false);
-                    Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-                    database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-                }
-                else
-                {
-                    PlacementUI.SetActive(true);
-                    UpdatePlacementUI(gridIdx);
-                } 
+//                    PlacementUI.SetActive(true);
+//                    Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
+//                    database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+//                    UpdatePlacementUI(gridIdx);
             }
 
             if (Input.GetKeyUp(KeyCode.C))
@@ -226,4 +228,19 @@ public class LevelDesignTIME : MonoBehaviour
 		activeKey = key;
 		database[activeKey].SetActive(true);
     }
+
+	private void tappedHandler(object sender, EventArgs e)
+	{
+		print(((GameObject)sender).name + " tapped.");
+	}
+
+	private void pressedHandler(object sender, EventArgs e)
+	{
+		print(((GameObject)sender).name + " pressed.");
+	}
+	
+	private void releasedHandler(object sender, EventArgs e)
+	{
+		print(((GameObject)sender).name + " released.");
+	}
 }
