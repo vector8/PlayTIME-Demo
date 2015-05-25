@@ -5,5 +5,10 @@ PlayTIME UI Mockup/HTML5 Build/*
 2DProjectTest/Temp/*
 2DProjectTest/Assets/UnityVS/*
 2DProjectTest/obj/*
-2DProjectTest/UnityVS*
 2DProjectTest/Build/*
+*.unityproj
+PlayTIME UI Mockup/Temp/*
+*.csproj
+*.sln
+*.user
+*.userprefs
