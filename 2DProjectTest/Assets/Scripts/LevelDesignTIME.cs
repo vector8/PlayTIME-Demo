@@ -53,14 +53,15 @@ public class LevelDesignTIME : MonoBehaviour
         grid = Completed.GameManager.instance.GetBoardScript();
 
 		activeKey = "4d004aef91";
-        database[activeKey].SetActive(true);
-        PlacementUI.SetActive(false);
+        //database[activeKey].SetActive(true);
+        //PlacementUI.SetActive(false);
         LastMousePosition = Input.mousePosition;
 
         if (mouseMode)
             MouseModeActiveText.SetActive(true);
         else
             MouseModeActiveText.SetActive(false);
+		
 
 		PlacementUI.transform.Find("Place").Find("Place").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
 		PlacementUI.transform.Find("ReplaceRemove").Find("Replace").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
@@ -69,7 +70,7 @@ public class LevelDesignTIME : MonoBehaviour
 		GetComponent<PressGesture>().Pressed += pressedHandler;
 		GetComponent<ReleaseGesture>().Released += releasedHandler;
 	}
-	
+
     // Description:
     // Updates the UI position and displays the correct
     // menu for the input index in the grid.
@@ -121,10 +122,12 @@ public class LevelDesignTIME : MonoBehaviour
             }
             else // Touch mode
             {
-                PlacementUI.SetActive(true);
-                Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-                database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-				UpdatePlacementUI(gridIdx);
+				if(database[activeKey].activeSelf)
+				{
+					Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
+					database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+					UpdatePlacementUI(gridIdx);
+				}
             }
 
             if (Input.GetKeyUp(KeyCode.C))
@@ -230,16 +233,18 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void tappedHandler(object sender, EventArgs e)
 	{
-		print(((GameObject)sender).name + " tapped.");
+		print(sender);
 	}
 
 	private void pressedHandler(object sender, EventArgs e)
 	{
-		print(((GameObject)sender).name + " pressed.");
+		database[activeKey].SetActive(true);
+		PlacementUI.SetActive(true);
 	}
 	
 	private void releasedHandler(object sender, EventArgs e)
 	{
-		print(((GameObject)sender).name + " released.");
+		database[activeKey].SetActive(false);
+		PlacementUI.SetActive(false);
 	}
 }
