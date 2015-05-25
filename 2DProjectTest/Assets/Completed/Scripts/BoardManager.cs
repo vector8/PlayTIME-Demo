@@ -78,8 +78,6 @@ namespace Completed
 		{
 			//Instantiate Board and set boardHolder to its transform.
 			boardHolder = new GameObject ("Board").transform;
-			boardHolder.gameObject.AddComponent<PressGesture>();
-			boardHolder.gameObject.AddComponent<ReleaseGesture>();
 
             // Alloc memory for floor tile refs
             InstantiatedFloorTiles = new GameObject[((rows) * (columns))];
