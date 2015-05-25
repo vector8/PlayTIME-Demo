@@ -109,6 +109,9 @@ namespace Completed
 					instance.transform.SetParent (boardHolder);
 				}
 			}
+
+			GameObject board2 = Instantiate<GameObject>(boardHolder.gameObject);
+			board2.transform.Translate(0f, 10f, 0f);
 		}
 		
 		
@@ -173,6 +176,7 @@ namespace Completed
 			
 			//Instantiate the exit tile in the upper right hand corner of our game board
 			Instantiate (exit, new Vector3 (columns - 1, rows - 1, 0f), Quaternion.identity);
+			Instantiate (exit, new Vector3 (columns - 1, 10f + rows - 1, 0f), Quaternion.identity);
 		}
 
         int lastMouseIdx = 0;
