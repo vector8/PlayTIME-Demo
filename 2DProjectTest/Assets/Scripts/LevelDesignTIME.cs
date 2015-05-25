@@ -5,8 +5,8 @@ using System.Collections.Generic;
 public class LevelDesignTIME : MonoBehaviour 
 {
     // Fake database
-    // int is the key (rfid), GameObject is the data (prefab)
-    public Dictionary<int, GameObject> database = new Dictionary<int, GameObject>();
+    // string is the key (rfid), GameObject is the data (prefab)
+    public Dictionary<string, GameObject> database = new Dictionary<string, GameObject>();
     public GameObject[] prefabs;
 
     public GameObject PlacementUI;
@@ -26,25 +26,31 @@ public class LevelDesignTIME : MonoBehaviour
     private bool previewMode = false;
 
     // Current or latest rfid tag read.
-    // Value of -1 means none active
-    public int activeKey = -1;
+    // Empty string means none active
+    public string activeKey = "";
 
 	// Use this for initialization
 	void Start () 
     {
 		// Add things to the data base
         // Key will be replaced with rfid values
-        for (int i = 0; i < prefabs.Length; i++)
-        {
-            // Instantiated them for displaying purposes only
-            GameObject go = Instantiate(prefabs[i]);
-            database.Add(i, go);
-            go.SetActive(false);
-        }
+        // Instantiated them for displaying purposes only
+		// Enemy
+        GameObject go = Instantiate(prefabs[0]);
+        database.Add("4d004aef91", go);
+        go.SetActive(false);
+		// Soda
+		go = Instantiate(prefabs[1]);
+		database.Add("4d004ab4ee", go);
+		go.SetActive(false);
+		// Wall
+		go = Instantiate(prefabs[2]);
+		database.Add("4d004aa4ee", go);
+		go.SetActive(false);
 
         grid = Completed.GameManager.instance.GetBoardScript();
 
-        activeKey = 0;
+		activeKey = "4d004aef91";
         database[activeKey].SetActive(true);
         PlacementUI.SetActive(false);
         LastMousePosition = Input.mousePosition;
@@ -148,8 +154,8 @@ public class LevelDesignTIME : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.RightShift))
         {
             database[activeKey].SetActive(false);
-            activeKey++;
-            activeKey = activeKey % prefabs.Length;
+//            activeKey++;
+//            activeKey = activeKey % prefabs.Length;
             database[activeKey].SetActive(true);
         }
 
@@ -214,14 +220,10 @@ public class LevelDesignTIME : MonoBehaviour
         grid.ReplaceObjectAtIndex(gridIdx, database[activeKey], this.transform);
     }
 
-    // Description:
-    // Obtains data represented by RFID Figurine from "database".
-    // Arguments:
-    // int rfid - The id to look up
-    // Returns:
-    // ?
-    void LookupRFID()
+    public void rfidFound(string key)
     {
-        
+		database[activeKey].SetActive(false);
+		activeKey = key;
+		database[activeKey].SetActive(true);
     }
 }
