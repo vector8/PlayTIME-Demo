@@ -66,9 +66,8 @@ public class LevelDesignTIME : MonoBehaviour
 		PlacementUI.transform.Find("ReplaceRemove").Find("Replace").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
 		PlacementUI.transform.Find("ReplaceRemove").Find("Remove").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
 
-		GameObject board = GameObject.Find("Board");
-		board.GetComponent<PressGesture>().Pressed += pressedHandler;
-		board.GetComponent<ReleaseGesture>().Released += releasedHandler;
+		GetComponent<PressGesture>().Pressed += pressedHandler;
+		GetComponent<ReleaseGesture>().Released += releasedHandler;
 	}
 	
     // Description:
@@ -122,10 +121,10 @@ public class LevelDesignTIME : MonoBehaviour
             }
             else // Touch mode
             {
-//                    PlacementUI.SetActive(true);
-//                    Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-//                    database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-//                    UpdatePlacementUI(gridIdx);
+                PlacementUI.SetActive(true);
+                Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
+                database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+				UpdatePlacementUI(gridIdx);
             }
 
             if (Input.GetKeyUp(KeyCode.C))
