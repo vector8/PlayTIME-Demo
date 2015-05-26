@@ -16,6 +16,8 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject MouseModeActiveText;
     public Vector2 PlacementUIOffsetInPixels;
 
+	public GameObject placeBtn, replaceBtn, removeBtn;
+
 	private ITouchManager touchManager;
 
     private Vector3 LastMousePosition;
@@ -68,9 +70,9 @@ public class LevelDesignTIME : MonoBehaviour
             MouseModeActiveText.SetActive(false);
 		
 
-		PlacementUI.transform.Find("Place").Find("Place").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
-		PlacementUI.transform.Find("ReplaceRemove").Find("Replace").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
-		PlacementUI.transform.Find("ReplaceRemove").Find("Remove").gameObject.GetComponent<TapGesture>().Tapped += tappedHandler;
+		placeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 
 		GetComponent<PressGesture>().Pressed += pressedHandler;
 		GetComponent<ReleaseGesture>().Released += releasedHandler;
@@ -85,7 +87,8 @@ public class LevelDesignTIME : MonoBehaviour
         if (updatePosition)
         {
             Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-            PlacementUI.transform.position = Camera.main.WorldToScreenPoint(new Vector3(wsTilePos.x, wsTilePos.y, 1.0f)) + new Vector3(PlacementUIOffsetInPixels.x, PlacementUIOffsetInPixels.y, 0.0f);
+            //PlacementUI.transform.position = Camera.main.WorldToScreenPoint(new Vector3(wsTilePos.x, wsTilePos.y, 1.0f)) + new Vector3(PlacementUIOffsetInPixels.x, PlacementUIOffsetInPixels.y, 0.0f);
+			PlacementUI.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, -1.0f);
         }
 
         // Display correct menu
@@ -243,9 +246,25 @@ public class LevelDesignTIME : MonoBehaviour
 		database[activeKey].SetActive(true);
     }
 
-	private void tappedHandler(object sender, EventArgs e)
+	private void buttonPressedHandler(object sender, EventArgs e)
 	{
-		print(sender);
+		print ("button pressed - " + sender);
+		GameObject s = ((Component) sender).gameObject;
+		if(s.name.Equals(placeBtn.name))
+		{
+			print("Placing object");
+			PlaceObject();
+		}
+		else if(s.name.Equals(replaceBtn.name))
+		{
+			print("Replacing object");
+			ReplaceObject();
+		}
+		else if(s.name.Equals(removeBtn.name))
+		{
+			print("Removing object");
+			RemoveObject();
+		}
 	}
 
 	private void pressedHandler(object sender, EventArgs e)
