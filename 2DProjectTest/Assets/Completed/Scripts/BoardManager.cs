@@ -206,7 +206,7 @@ namespace Completed
         {
             int retIdx = -1;
 
-            Vector3 wsMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 wsMousePos = Camera.main.ScreenToWorldPoint(p);
             wsMousePos += new Vector3(0.5f, 0.5f, 0.0f);
             int x = Mathf.FloorToInt(wsMousePos.x);
             int y = Mathf.FloorToInt(wsMousePos.y);
