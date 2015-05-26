@@ -9,14 +9,19 @@ public class LevelDesignTIME : MonoBehaviour
 {
     // Fake database
     // string is the key (rfid), GameObject is the data (prefab)
-    public Dictionary<string, GameObject> database = new Dictionary<string, GameObject>();
-    public GameObject[] prefabs;
+	public Dictionary<string, Pair<GameObject, GameObject>> database = new Dictionary<string, Pair<GameObject, GameObject>>();
+	public GameObject[] prefabs;
+    public GameObject[] staticPrefabs;
 
     public GameObject PlacementUI;
     public GameObject MouseModeActiveText;
     public Vector2 PlacementUIOffsetInPixels;
 
-	public GameObject placeBtn, replaceBtn, removeBtn;
+	public GameObject placeBtn, replaceBtn, removeBtn, resetBtn;
+	
+	// Current or latest rfid tag read.
+	// Empty string means none active
+	public string activeKey = "";
 
 	private ITouchManager touchManager;
 
@@ -31,10 +36,9 @@ public class LevelDesignTIME : MonoBehaviour
     private int lockedPosition;
 
     private bool previewMode = false;
-
-    // Current or latest rfid tag read.
-    // Empty string means none active
-    public string activeKey = "";
+	
+	private List<GameObject> objects;
+	private List<GameObject> staticObjects;
 
 	// Use this for initialization
 	void Start () 
@@ -43,17 +47,25 @@ public class LevelDesignTIME : MonoBehaviour
         // Key will be replaced with rfid values
         // Instantiated them for displaying purposes only
 		// Enemy
-        GameObject go = Instantiate(prefabs[0]);
-        database.Add("4d004aef91", go);
-        go.SetActive(false);
+		Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>(Instantiate(prefabs[0]), Instantiate(staticPrefabs[0]));
+		p.first.SetActive(false);
+		p.second.SetActive(false);
+        database.Add("4d004aef91", p);
 		// Soda
-		go = Instantiate(prefabs[1]);
-		database.Add("4d004ab4ee", go);
-		go.SetActive(false);
+		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[1]), Instantiate(staticPrefabs[1]));
+		p.first.SetActive(false);
+		p.second.SetActive(false);
+		database.Add("4d004ab4ee", p);
 		// Wall
-		go = Instantiate(prefabs[2]);
-		database.Add("4d004aa4ee", go);
-		go.SetActive(false);
+		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[2]), Instantiate(staticPrefabs[2]));
+		p.first.SetActive(false);
+		p.second.SetActive(false);
+		database.Add("4d004aa4ee", p);
+		// Player
+		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[3]), Instantiate(staticPrefabs[3]));
+		p.first.SetActive(false);
+		p.second.SetActive(false);
+		database.Add("0a00ec698c", p);
 
         grid = Completed.GameManager.instance.GetBoardScript();
 
@@ -73,6 +85,7 @@ public class LevelDesignTIME : MonoBehaviour
 		placeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		resetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 
 //		GetComponent<PressGesture>().Pressed += pressedHandler;
 //		GetComponent<ReleaseGesture>().Released += releasedHandler;
@@ -107,88 +120,55 @@ public class LevelDesignTIME : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
-        int gridIdx = grid.GetTileIndexInGridAtPoint(Input.mousePosition, true);
+		int gridIdx;
 
-//        if (gridIdx > 0)
-//        {
-//            if (mouseMode)
-//            {
-//                // Lock the ui position so it doesnt move when we try to click it
-//                if (Input.GetMouseButtonUp(0))
-//                {
-//                    lockPositions = !lockPositions;
-//                    PlacementUI.SetActive(lockPositions);
-//                    UpdatePlacementUI(gridIdx, lockPositions);
-//                    lockedPosition = gridIdx;
-//                }
-//
-//                if (!lockPositions)
-//                {
-//                    Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-//                    database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-//                }
-//            }
-//            else // Touch mode
-//            {
+		database[activeKey].first.SetActive(touchManager.ActiveTouches.Count > 0);
+		database[activeKey].second.SetActive(touchManager.ActiveTouches.Count > 0);
+		PlacementUI.SetActive(touchManager.ActiveTouches.Count > 0);
+		
+		if(database[activeKey].first.activeSelf)
+		{
+			//print (touchManager.ActiveTouches[0].Id + " - " + touchManager.ActiveTouches[0].Position);
+			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
+			//print (gridIdx);
+			Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
+			database[activeKey].first.transform.position = new Vector3(wsTilePos.x, wsTilePos.y + 10, 1.0f);
+			database[activeKey].second.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+			UpdatePlacementUI(gridIdx);
+		}
 
-				database[activeKey].SetActive(touchManager.ActiveTouches.Count > 0);
-				PlacementUI.SetActive(touchManager.ActiveTouches.Count > 0);
-				
-				if(database[activeKey].activeSelf)
-				{
-					//print (touchManager.ActiveTouches[0].Id + " - " + touchManager.ActiveTouches[0].Position);
-       				gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
-					//print (gridIdx);
-					Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-					database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-					UpdatePlacementUI(gridIdx);
-				}
-           // }
+        if (Input.GetKeyUp(KeyCode.C))
+        {
+            PlaceObject();
+        }
 
-            if (Input.GetKeyUp(KeyCode.C))
-            {
-                PlaceObject();
-            }
+        if (Input.GetKeyUp(KeyCode.V))
+        {
+            ReplaceObject();
+        }
 
-            if (Input.GetKeyUp(KeyCode.V))
-            {
-                ReplaceObject();
-            }
-
-            if (Input.GetKeyUp(KeyCode.B))
-            {
-                RemoveObject();
-            }
+        if (Input.GetKeyUp(KeyCode.B))
+        {
+            RemoveObject();
+        }
 
 
-            // Toggle mouse mode
-            if (Input.GetKeyUp(KeyCode.M))
-            {
-                mouseMode = !mouseMode;
-                MouseModeActiveText.SetActive(mouseMode);
-            }
-       // }
+        // Toggle mouse mode
+        if (Input.GetKeyUp(KeyCode.M))
+        {
+            mouseMode = !mouseMode;
+            MouseModeActiveText.SetActive(mouseMode);
+        }
 
         // Cycle through the prefabs 
         if (Input.GetKeyUp(KeyCode.RightShift))
         {
-            database[activeKey].SetActive(false);
-//            activeKey++;
-//            activeKey = activeKey % prefabs.Length;
-            database[activeKey].SetActive(true);
+			rfidFound("0a00ec698c");
         }
 
         if (Input.GetKeyUp(KeyCode.P))
         {
-            previewMode = !previewMode;
-            if (previewMode)
-            {
-                grid.SetRevert();
-            }
-            else
-            {
-                grid.Revert();
-            }
+			grid.Revert();
         }
 
         LastMousePosition = Input.mousePosition;
@@ -206,7 +186,7 @@ public class LevelDesignTIME : MonoBehaviour
         // Check if grid spot is free
         if (grid.IsTileFreeAtIndex(gridIdx))
         {
-            grid.PlaceObjectAtIndex(gridIdx, database[activeKey], this.transform);
+			grid.PlaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
         }
         else
         {
@@ -236,14 +216,14 @@ public class LevelDesignTIME : MonoBehaviour
         else
             gridIdx = lockedPosition;
 
-        grid.ReplaceObjectAtIndex(gridIdx, database[activeKey], this.transform);
+		grid.ReplaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
     }
 
     public void rfidFound(string key)
     {
-		database[activeKey].SetActive(false);
+		database[activeKey].first.SetActive(false);
+		database[activeKey].second.SetActive(false);
 		activeKey = key;
-		database[activeKey].SetActive(true);
     }
 
 	private void buttonPressedHandler(object sender, EventArgs e)
@@ -264,6 +244,11 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			print("Removing object");
 			RemoveObject();
+		}
+		else if(s.name.Equals(resetBtn.name))
+		{
+			print("Resetting game");
+			grid.Revert();
 		}
 	}
 
