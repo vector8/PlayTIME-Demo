@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TouchScript;
 using TouchScript.Gestures;
 
 public class LevelDesignTIME : MonoBehaviour 
@@ -14,6 +15,8 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject PlacementUI;
     public GameObject MouseModeActiveText;
     public Vector2 PlacementUIOffsetInPixels;
+
+	private ITouchManager touchManager;
 
     private Vector3 LastMousePosition;
 
@@ -51,6 +54,8 @@ public class LevelDesignTIME : MonoBehaviour
 		go.SetActive(false);
 
         grid = Completed.GameManager.instance.GetBoardScript();
+
+		touchManager = TouchManager.Instance;
 
 		activeKey = "4d004aef91";
         //database[activeKey].SetActive(true);
@@ -122,8 +127,15 @@ public class LevelDesignTIME : MonoBehaviour
             }
             else // Touch mode
             {
+
+				database[activeKey].SetActive(touchManager.ActiveTouches.Count > 0);
+				PlacementUI.SetActive(touchManager.ActiveTouches.Count > 0);
+				
 				if(database[activeKey].activeSelf)
 				{
+					print (touchManager.ActiveTouches[0].Id + " - " + touchManager.ActiveTouches[0].Position);
+       				gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
+					print (gridIdx);
 					Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
 					database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
 					UpdatePlacementUI(gridIdx);
@@ -184,7 +196,7 @@ public class LevelDesignTIME : MonoBehaviour
         int gridIdx = 0;
 
         if (!mouseMode)
-            gridIdx = grid.GetTileIndexInGridAtPoint(Input.mousePosition, false);
+			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false);
         else
             gridIdx = lockedPosition;
 
@@ -205,7 +217,7 @@ public class LevelDesignTIME : MonoBehaviour
         int gridIdx = 0;
 
         if (!mouseMode)
-            gridIdx = grid.GetTileIndexInGridAtPoint(Input.mousePosition, false);
+			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false);
         else
             gridIdx = lockedPosition;
 
@@ -217,7 +229,7 @@ public class LevelDesignTIME : MonoBehaviour
         int gridIdx = 0;
 
         if (!mouseMode)
-            gridIdx = grid.GetTileIndexInGridAtPoint(Input.mousePosition, false);
+			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false);
         else
             gridIdx = lockedPosition;
 
@@ -238,13 +250,39 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void pressedHandler(object sender, EventArgs e)
 	{
-		database[activeKey].SetActive(true);
-		PlacementUI.SetActive(true);
+		print("pressed");
+//		for(int i = 0; i < ((PressGesture)sender).ActiveTouches.Count; i++)
+//		{
+//			touchManager.ActiveTouches.Add(((PressGesture)sender).ActiveTouches[i]);
+//		}
 	}
 	
 	private void releasedHandler(object sender, EventArgs e)
 	{
-		database[activeKey].SetActive(false);
-		PlacementUI.SetActive(false);
+//		print(((ReleaseGesture)sender).ActiveTouches.Count);
+//		if(touchManager.ActiveTouches.Count == 0)
+//		{
+//			touchManager.ActiveTouches.Clear();
+//		}
+//		else
+//		{
+//			for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+//			{
+//				bool found = false;
+//				for(int j = 0; j < touchManager.ActiveTouches.Count; j++)
+//				{
+//					if(touchManager.ActiveTouches[i].Id == touchManager.ActiveTouches[j].Id)
+//					{
+//						found = true;
+//						break;
+//					}
+//				}
+//				
+//				if(!found)
+//				{
+//					touchManager.ActiveTouches.RemoveAt(i);
+//				}
+//			}
+//		}
 	}
 }
