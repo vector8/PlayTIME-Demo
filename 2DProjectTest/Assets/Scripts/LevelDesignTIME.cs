@@ -109,41 +109,41 @@ public class LevelDesignTIME : MonoBehaviour
     {
         int gridIdx = grid.GetTileIndexInGridAtPoint(Input.mousePosition, true);
 
-        if (gridIdx > 0)
-        {
-            if (mouseMode)
-            {
-                // Lock the ui position so it doesnt move when we try to click it
-                if (Input.GetMouseButtonUp(0))
-                {
-                    lockPositions = !lockPositions;
-                    PlacementUI.SetActive(lockPositions);
-                    UpdatePlacementUI(gridIdx, lockPositions);
-                    lockedPosition = gridIdx;
-                }
-
-                if (!lockPositions)
-                {
-                    Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-                    database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-                }
-            }
-            else // Touch mode
-            {
+//        if (gridIdx > 0)
+//        {
+//            if (mouseMode)
+//            {
+//                // Lock the ui position so it doesnt move when we try to click it
+//                if (Input.GetMouseButtonUp(0))
+//                {
+//                    lockPositions = !lockPositions;
+//                    PlacementUI.SetActive(lockPositions);
+//                    UpdatePlacementUI(gridIdx, lockPositions);
+//                    lockedPosition = gridIdx;
+//                }
+//
+//                if (!lockPositions)
+//                {
+//                    Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
+//                    database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+//                }
+//            }
+//            else // Touch mode
+//            {
 
 				database[activeKey].SetActive(touchManager.ActiveTouches.Count > 0);
 				PlacementUI.SetActive(touchManager.ActiveTouches.Count > 0);
 				
 				if(database[activeKey].activeSelf)
 				{
-					print (touchManager.ActiveTouches[0].Id + " - " + touchManager.ActiveTouches[0].Position);
+					//print (touchManager.ActiveTouches[0].Id + " - " + touchManager.ActiveTouches[0].Position);
        				gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
-					print (gridIdx);
+					//print (gridIdx);
 					Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
 					database[activeKey].transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
 					UpdatePlacementUI(gridIdx);
 				}
-            }
+           // }
 
             if (Input.GetKeyUp(KeyCode.C))
             {
@@ -167,7 +167,7 @@ public class LevelDesignTIME : MonoBehaviour
                 mouseMode = !mouseMode;
                 MouseModeActiveText.SetActive(mouseMode);
             }
-        }
+       // }
 
         // Cycle through the prefabs 
         if (Input.GetKeyUp(KeyCode.RightShift))
