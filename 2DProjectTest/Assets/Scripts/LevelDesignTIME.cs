@@ -74,8 +74,8 @@ public class LevelDesignTIME : MonoBehaviour
 		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 
-		GetComponent<PressGesture>().Pressed += pressedHandler;
-		GetComponent<ReleaseGesture>().Released += releasedHandler;
+//		GetComponent<PressGesture>().Pressed += pressedHandler;
+//		GetComponent<ReleaseGesture>().Released += releasedHandler;
 	}
 
     // Description:
@@ -269,7 +269,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void pressedHandler(object sender, EventArgs e)
 	{
-		print("pressed");
+		print("pressed - " + ((PressGesture)sender).ActiveTouches.Count + " - " + ((PressGesture)sender).ActiveTouches[0].Position);
 //		for(int i = 0; i < ((PressGesture)sender).ActiveTouches.Count; i++)
 //		{
 //			touchManager.ActiveTouches.Add(((PressGesture)sender).ActiveTouches[i]);
