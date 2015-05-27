@@ -25,6 +25,8 @@ public class PathFollowing : MonoBehaviour
     public float pathPlaybackTimeInSeconds = 5.0f;  // Time it takes to traverse through the path, in seconds
     public float currentPathPlayBackTime = 0.0f;
 
+    public bool movableObject = false;  // Does this game object move along the path? Set to true if it does
+
 	// Use this for initialization
 	void Start () 
     {
@@ -61,7 +63,7 @@ public class PathFollowing : MonoBehaviour
         {
             AddPointToPath();
         }
-        else if (currentState == PathState.Playing)
+        else if (currentState == PathState.Playing && movableObject)
         {
             currentPathPlayBackTime += Time.deltaTime;
 
@@ -84,7 +86,6 @@ public class PathFollowing : MonoBehaviour
             Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u);
             transform.position = Vector3.Lerp(p1, p2, u);
         }
-	
 	}
 
     // Description:
@@ -106,8 +107,14 @@ public class PathFollowing : MonoBehaviour
         }
 
         mouseWorldSpace.z = -1.0f; // to make line draw above everything else
-        pathPoints.Add(mouseWorldSpace);
-        UpdatePathRenderer();
+        
+        if (!movableObject)
+            pathPoints.Add(mouseWorldSpace);
+        else
+            pathPoints.Add((new Vector3(0f, 10f, 0f)) + mouseWorldSpace); 
+
+        if (!movableObject)
+            UpdatePathRenderer();
     }
 
     // Description:
