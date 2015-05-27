@@ -12,7 +12,7 @@ namespace Completed
 		
 		
 		private Animator animator;							//Variable of type Animator to store a reference to the enemy's Animator component.
-		private Transform target;							//Transform to attempt to move toward each turn.
+		private Transform target = null;					//Transform to attempt to move toward each turn.
 		private bool skipMove;								//Boolean to determine whether or not enemy should skip a turn or move this turn.
 		
 		
@@ -27,12 +27,34 @@ namespace Completed
 			animator = GetComponent<Animator> ();
 			
 			//Find the Player GameObject using it's tag and store a reference to its transform component.
-			target = GameObject.FindGameObjectWithTag ("Player").transform;
+			GameObject[] t = GameObject.FindGameObjectsWithTag("Player");
+			for(int i = 0; i < t.Length; i++)
+			{
+				if(t[i].activeSelf)
+				{
+					target = t[i].transform;
+				}
+			}
 			
 			//Call the start function of our base class MovingObject.
 			base.Start ();
 		}
-		
+
+		void Update()
+		{
+			if(target == null || !target.gameObject.activeSelf)
+			{
+				target = null;
+				GameObject[] t = GameObject.FindGameObjectsWithTag("Player");
+				for(int i = 0; i < t.Length; i++)
+				{
+					if(t[i].activeSelf)
+					{
+						target = t[i].transform;
+					}
+				}
+			}
+		}
 		
 		//Override the AttemptMove function of MovingObject to include functionality needed for Enemy to skip turns.
 		//See comments in MovingObject for more on how base AttemptMove function works.
@@ -43,7 +65,6 @@ namespace Completed
 			{
 				skipMove = false;
 				return;
-				
 			}
 			
 			//Call the AttemptMove function from MovingObject.
@@ -61,6 +82,11 @@ namespace Completed
 			//These values allow us to choose between the cardinal directions: up, down, left and right.
 			int xDir = 0;
 			int yDir = 0;
+
+			if(target == null)
+			{
+				return;
+			}
 			
 			//If the difference in positions is approximately zero (Epsilon) do the following:
 			if(Mathf.Abs (target.position.x - transform.position.x) < float.Epsilon)
