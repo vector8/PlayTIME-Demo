@@ -41,6 +41,7 @@ namespace Completed
 		public Count wallCount = new Count (5, 9);						//Lower and upper limit for our random number of walls per level.
 		public Count foodCount = new Count (1, 5);						//Lower and upper limit for our random number of food items per level.
 		public GameObject exit;											//Prefab to spawn for exit.
+		public GameObject staticExit;											//Prefab to spawn for exit.
 		public GameObject[] floorTiles;									//Array of floor prefabs.
 		public GameObject[] wallTiles;									//Array of wall prefabs.
 		public GameObject[] foodTiles;									//Array of food prefabs.
@@ -176,7 +177,7 @@ namespace Completed
 			//LayoutObjectAtRandom (enemyTiles, enemyCount, enemyCount);
 			
 			//Instantiate the exit tile in the upper right hand corner of our game board
-			Instantiate (exit, new Vector3 (columns - 1, rows - 1, 0f), Quaternion.identity);
+			Instantiate (staticExit, new Vector3 (columns - 1, rows - 1, 0f), Quaternion.identity);
 			Instantiate (exit, new Vector3 (columns - 1, 10f + rows - 1, 0f), Quaternion.identity);
 		}
 
@@ -286,6 +287,11 @@ namespace Completed
             for (int i = 0; i < PlacedTiles.Count; i++)
             {
 				PlacedTiles[i].go.transform.position = StaticPlacedTiles[i].go.transform.position + (new Vector3(0f, 10f, 0f));
+				PathFollowing p = PlacedTiles[i].go.GetComponent<PathFollowing>();
+				if(p != null)
+				{
+					p.setStateToIdle();
+				}
             }
         }
 

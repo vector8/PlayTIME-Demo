@@ -13,13 +13,14 @@ public class PathFollowing : MonoBehaviour
 	private int touchID;
 	private ITouchManager touchManager;
 
-    enum PathState
+    public enum PathState
     {
         Drawing = 0,     // User is drawing path
-        Playing          // Object is moving along path
+        Playing,          // Object is moving along path
+		Idle
     };
 
-    private PathState currentState = PathState.Drawing;
+    public PathState currentState = PathState.Drawing;
 
     public float minDist = 0.1f;   // The minimum distance a new point has to be from the previous point to be added to the pathPoint list
 
@@ -61,7 +62,7 @@ public class PathFollowing : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
     {
-        if (Input.GetKeyUp(KeyCode.Space))
+        if (Input.GetKey(KeyCode.I))
             currentState = PathState.Playing;
 
         if (currentState == PathState.Drawing)
@@ -113,7 +114,7 @@ public class PathFollowing : MonoBehaviour
 
 		if(!mousePosSet)
 		{
-			currentState = PathState.Playing;
+			currentState = PathState.Idle;
 			return;
 		}
 
@@ -166,5 +167,19 @@ public class PathFollowing : MonoBehaviour
 	{
 		touchID = id;
 		movableObject = movingObject;
+	}
+
+	public void setStateToIdle()
+	{
+		currentState = PathState.Idle;
+		transform.position = pathPoints[0];
+		currentPathPlayBackTime = 0;
+		currentPoint = 0;
+	}
+
+	void OnDestroy()
+	{
+		print ("path destroyed.");
+		DestroyImmediate(pathRendererParent);
 	}
 }
