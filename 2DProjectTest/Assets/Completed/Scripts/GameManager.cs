@@ -155,6 +155,12 @@ namespace Completed
 			//Loop through List of Enemy objects.
 			for (int i = 0; i < enemies.Count; i++)
 			{
+				if(enemies[i] == null)
+				{
+					enemies.RemoveAt(i);
+					continue;
+				}
+
 				if(!enemies[i].gameObject.activeSelf)
 					continue;
 
