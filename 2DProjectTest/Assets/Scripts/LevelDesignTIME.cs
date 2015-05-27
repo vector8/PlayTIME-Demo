@@ -25,7 +25,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private ITouchManager touchManager;
 
-    private Vector3 LastMousePosition;
+    private Vector3 lastTouchPosition;
 
     // Reference to the board (Grid)
     private Completed.BoardManager grid;
@@ -34,6 +34,11 @@ public class LevelDesignTIME : MonoBehaviour
     public bool mouseMode = false;
     private bool lockPositions = false;
     private int lockedPosition;
+
+	private bool removed = false;
+	private bool dragging = true;
+	private int lastGridIdx;
+	private string keyToReset = "";
 
     private bool previewMode = false;
 	
@@ -74,7 +79,6 @@ public class LevelDesignTIME : MonoBehaviour
 		activeKey = "4d004aef91";
         //database[activeKey].SetActive(true);
         //PlacementUI.SetActive(false);
-        LastMousePosition = Input.mousePosition;
 
         if (mouseMode)
             MouseModeActiveText.SetActive(true);
@@ -104,12 +108,12 @@ public class LevelDesignTIME : MonoBehaviour
         // Display correct menu
         if (grid.IsTileFreeAtIndex(gridIdx))
         {
-            PlacementUI.transform.FindChild("Place").gameObject.SetActive(true);
+            //PlacementUI.transform.FindChild("Place").gameObject.SetActive(true);
             PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(false);
         }
         else
         {
-            PlacementUI.transform.FindChild("Place").gameObject.SetActive(false);
+            //PlacementUI.transform.FindChild("Place").gameObject.SetActive(false);
             PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(true);
         }
     }
@@ -119,43 +123,119 @@ public class LevelDesignTIME : MonoBehaviour
     {
 		int gridIdx;
 
-		database[activeKey].first.SetActive(touchManager.ActiveTouches.Count > 0);
-		database[activeKey].second.SetActive(touchManager.ActiveTouches.Count > 0);
-		PlacementUI.SetActive(touchManager.ActiveTouches.Count > 0);
-		
-		if(database[activeKey].first.activeSelf)
+		if(touchManager.ActiveTouches.Count > 0)
 		{
-			//print (touchManager.ActiveTouches[0].Id + " - " + touchManager.ActiveTouches[0].Position);
-			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
-			//print (gridIdx);
-			Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-			database[activeKey].first.transform.position = new Vector3(wsTilePos.x, wsTilePos.y + 10, 1.0f);
-			database[activeKey].second.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-			UpdatePlacementUI(gridIdx);
+			if(!removed)
+			{
+				lastTouchPosition = touchManager.ActiveTouches[0].Position;
+				if(!database[activeKey].first.activeSelf)
+				{
+					PlacementUI.SetActive(true);
+					database[activeKey].first.SetActive(true);
+					database[activeKey].second.SetActive(true);
+					if(!grid.IsTileFreeAtIndex(grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true)))
+					{
+						dragging = true;
+						lastGridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
+					}
+				}
+				else
+				{
+					gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
+					if(dragging)
+					{
+						if(lastGridIdx != gridIdx)
+						{
+							database[activeKey].first.SetActive(false);
+							database[activeKey].second.SetActive(false);
+							string keyToActivate = "";
+							string objectName = "";
+							Dictionary<string, Pair<GameObject, GameObject>>.KeyCollection keys = database.Keys;
+							for (int i = 0; i < grid.StaticPlacedTiles.Count; i++)
+							{
+								if (grid.StaticPlacedTiles[i].tileIdx == lastGridIdx)
+								{
+									objectName = grid.StaticPlacedTiles[i].go.name;
+
+									foreach(KeyValuePair<string, Pair<GameObject, GameObject>> entry in database)
+									{
+										if(objectName == string.Format("{0}(Clone)", entry.Value.second.name))
+										{
+											keyToActivate = entry.Key;
+											break;
+										}
+									}
+
+									break;
+								}
+							}
+
+							if(keyToActivate.Length > 0)
+							{
+								keyToReset = activeKey;
+								activeKey = keyToActivate;
+								database[activeKey].first.SetActive(true);
+								database[activeKey].second.SetActive(true);
+							}
+							else
+							{
+								print("ERROR: could not find object " + objectName + " in database.");
+							}
+
+							grid.RemoveObjectAtIndex(lastGridIdx);
+							dragging = false;
+						}
+					}
+					
+					Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
+					database[activeKey].first.transform.position = new Vector3(wsTilePos.x, wsTilePos.y + 10, 1.0f);
+					database[activeKey].second.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+					UpdatePlacementUI(gridIdx);
+				}
+			}
+		}
+		else
+		{
+			if(database[activeKey].first.activeSelf)
+			{
+				PlaceObject(lastTouchPosition);
+				database[activeKey].first.SetActive(false);
+				database[activeKey].second.SetActive(false);
+				PlacementUI.SetActive(false);
+			}
+
+			if(keyToReset.Length > 0)
+			{
+				activeKey = keyToReset;
+				keyToReset = "";
+			}
+
+			removed = false;
+			dragging = false;
 		}
 
-        if (Input.GetKeyUp(KeyCode.C))
-        {
-            PlaceObject();
-        }
-
-        if (Input.GetKeyUp(KeyCode.V))
-        {
-            ReplaceObject();
-        }
-
-        if (Input.GetKeyUp(KeyCode.B))
-        {
-            RemoveObject();
-        }
-
-
-        // Toggle mouse mode
-        if (Input.GetKeyUp(KeyCode.M))
-        {
-            mouseMode = !mouseMode;
-            MouseModeActiveText.SetActive(mouseMode);
-        }
+//        if (Input.GetKeyUp(KeyCode.C))
+//        {
+//            PlaceObject();
+//        }
+//
+//        if (Input.GetKeyUp(KeyCode.V))
+//        {
+//            ReplaceObject();
+//        }
+//
+//        if (Input.GetKeyUp(KeyCode.B))
+//        {
+//            RemoveObject();
+//        }
+//
+//
+//        // Toggle mouse mode
+//        if (Input.GetKeyUp(KeyCode.M))
+//        {
+//            mouseMode = !mouseMode;
+//            MouseModeActiveText.SetActive(mouseMode);
+//        }
 
         // Cycle through the prefabs 
         if (Input.GetKeyUp(KeyCode.RightShift))
@@ -167,8 +247,6 @@ public class LevelDesignTIME : MonoBehaviour
         {
 			grid.Revert();
         }
-
-        LastMousePosition = Input.mousePosition;
 	}
 
     public void PlaceObject()
@@ -192,16 +270,43 @@ public class LevelDesignTIME : MonoBehaviour
         }
     }
 
-    public void RemoveObject()
-    {
-        int gridIdx = 0;
-
-        if (!mouseMode)
+	public void PlaceObject(Vector2 position)
+	{
+		int gridIdx = 0;
+		
+		if (!mouseMode)
+			gridIdx = grid.GetTileIndexInGridAtPoint(position, false);
+		else
+			gridIdx = lockedPosition;
+		
+		// Check if grid spot is free
+		if (grid.IsTileFreeAtIndex(gridIdx))
+		{
+			grid.PlaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
+		}
+		else
+		{
+			// Ask user if they want to replace
+			Debug.Log("Not free");
+		}
+	}
+	
+	public void RemoveObject()
+	{
+		int gridIdx = 0;
+		
+		if (!mouseMode)
 			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false);
         else
             gridIdx = lockedPosition;
 
         grid.RemoveObjectAtIndex(gridIdx);
+
+		database[activeKey].first.SetActive(false);
+		database[activeKey].second.SetActive(false);
+		PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(false);
+
+		removed = true;
     }
 
     public void ReplaceObject()
