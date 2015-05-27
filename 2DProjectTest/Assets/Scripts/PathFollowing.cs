@@ -10,6 +10,9 @@ public class PathFollowing : MonoBehaviour
     private List<LineRenderer> pathRenderer = new List<LineRenderer>(); // Line renderers to draw the path. Multiple line renderers needed to avoid bends in line
     private GameObject pathRendererParent;                              // All line renderers are a child of this object
 
+	private int touchID;
+	private ITouchManager touchManager;
+
     enum PathState
     {
         Drawing = 0,     // User is drawing path
@@ -31,6 +34,8 @@ public class PathFollowing : MonoBehaviour
 	void Start () 
     {
         pathRendererParent = new GameObject("PathRenderer");
+
+		touchManager = TouchManager.Instance;
 
 //         // Create a new line renderer and store a reference to it
 //         GameObject go = new GameObject();
@@ -83,7 +88,7 @@ public class PathFollowing : MonoBehaviour
 
             float u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
 
-            Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u);
+            //Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u);
             transform.position = Vector3.Lerp(p1, p2, u);
         }
 	}
@@ -94,7 +99,24 @@ public class PathFollowing : MonoBehaviour
     // test if it is far enough from the previously added point.
     void AddPointToPath()
     {
-        Vector3 mouseWorldSpace = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+		Vector3 mouseWorldSpace = new Vector3();
+		bool mousePosSet = false;
+		for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+		{
+			if(touchManager.ActiveTouches[i].Id == touchID)
+			{
+				mouseWorldSpace = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position);
+				mousePosSet = true;
+				break;
+			}
+		}
+
+		if(!mousePosSet)
+		{
+			currentState = PathState.Playing;
+			return;
+		}
+
         if (pathPoints.Count > 0)
         {
             Vector3 previousPoint = pathPoints[pathPoints.Count - 1];
@@ -140,4 +162,9 @@ public class PathFollowing : MonoBehaviour
         lr.SetPosition(1, pathPoints[pathPoints.Count - 1]);
     }
 
+	public void initDrawing(int id, bool movingObject)
+	{
+		touchID = id;
+		movableObject = movingObject;
+	}
 }
