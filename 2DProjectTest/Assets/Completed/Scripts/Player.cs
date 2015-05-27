@@ -35,7 +35,7 @@ namespace Completed
 			food = GameManager.instance.playerFoodPoints;
 			
 			//Set the foodText to reflect the current player food total.
-			foodText.text = "Food: " + food;
+			//foodText.text = "Food: " + food;
 			
 			//Call the Start function of the MovingObject base class.
 			base.Start ();
@@ -131,7 +131,7 @@ namespace Completed
 			food--;
 			
 			//Update food text display to reflect current score.
-			foodText.text = "Food: " + food;
+			//foodText.text = "Food: " + food;
 			
 			//Call the AttemptMove method of the base class, passing in the component T (in this case Wall) and x and y direction to move.
 			base.AttemptMove <T> (xDir, yDir);
@@ -220,6 +220,8 @@ namespace Completed
 		private void Restart ()
 		{
 			//Load the last scene loaded, in this case Main, the only scene in the game.
+			Completed.GameManager.instance.GetBoardScript().PlacedTiles.Clear();
+			Completed.GameManager.instance.GetBoardScript().StaticPlacedTiles.Clear();
 			Application.LoadLevel (Application.loadedLevel);
 		}
 		
@@ -235,7 +237,7 @@ namespace Completed
 			food -= loss;
 			
 			//Update the food display with the new total.
-			foodText.text = "-"+ loss + " Food: " + food;
+			//foodText.text = "-"+ loss + " Food: " + food;
 			
 			//Check to see if game has ended.
 			CheckIfGameOver ();

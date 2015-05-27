@@ -49,7 +49,7 @@ namespace Completed
 
         public GameObject[] InstantiatedFloorTiles;                     // References to instantiated floor tiles
         public List<PlacedTile> PlacedTiles;
-        public List<Vector3> PlacedTilesRevert;                      // Position of objects in PlacedTiles will be set to PlacedTilesRevert when preview ends
+        public List<PlacedTile> StaticPlacedTiles;
 
 		private Transform boardHolder;									//A variable to store a reference to the transform of our Board object.
 		private List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
@@ -247,14 +247,18 @@ namespace Completed
             return true;
         }
 
-        public void PlaceObjectAtIndex(int idx, GameObject toSpawn, Transform parent)
-        {
-            GameObject g = GameObject.Instantiate(toSpawn);
-            g.transform.position = GetPositionFromIndex(idx);
-            g.transform.parent = parent;
-            // Store placed tile
-            PlacedTiles.Add(new PlacedTile(g, idx));
-        }
+		public void PlaceObjectAtIndex(int idx, GameObject toSpawn, GameObject staticToSpawn, Transform parent)
+		{
+			GameObject g = GameObject.Instantiate(toSpawn);
+			g.transform.position = (new Vector2(0f, 10f)) + GetPositionFromIndex(idx);
+			g.transform.parent = parent;
+			GameObject sg = GameObject.Instantiate(staticToSpawn);
+			sg.transform.position = GetPositionFromIndex(idx);
+			sg.transform.parent = parent;
+			// Store placed tile
+			PlacedTiles.Add(new PlacedTile(g, idx));
+			StaticPlacedTiles.Add(new PlacedTile(sg, idx));
+		}
 
         public void RemoveObjectAtIndex(int idx)
         {
@@ -264,31 +268,24 @@ namespace Completed
                 {
                     DestroyImmediate(PlacedTiles[i].go);
                     PlacedTiles.RemoveAt(i);
+					DestroyImmediate(StaticPlacedTiles[i].go);
+					StaticPlacedTiles.RemoveAt(i);
                     return;
                 }
             }
         }
 
-        public void ReplaceObjectAtIndex(int idx, GameObject toReplace, Transform parent)
+        public void ReplaceObjectAtIndex(int idx, GameObject toReplace, GameObject staticToReplace, Transform parent)
         {
             RemoveObjectAtIndex(idx);
-            PlaceObjectAtIndex(idx, toReplace, parent);
-        }
-
-        public void SetRevert()
-        {
-            PlacedTilesRevert.Clear();
-            for (int i = 0; i < PlacedTiles.Count; i++)
-            {
-                PlacedTilesRevert.Add(PlacedTiles[i].go.transform.position);
-            }
+			PlaceObjectAtIndex(idx, toReplace, staticToReplace, parent);
         }
 
         public void Revert()
         {
             for (int i = 0; i < PlacedTiles.Count; i++)
             {
-                PlacedTiles[i].go.transform.position = PlacedTilesRevert[i];
+				PlacedTiles[i].go.transform.position = StaticPlacedTiles[i].go.transform.position + (new Vector3(0f, 10f, 0f));
             }
         }
 
