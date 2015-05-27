@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using TouchScript;
+using TouchScript.Gestures;
 
 public class PathFollowing : MonoBehaviour 
 {
@@ -18,6 +20,10 @@ public class PathFollowing : MonoBehaviour
 
     public float minDist = 0.1f;   // The minimum distance a new point has to be from the previous point to be added to the pathPoint list
 
+    private int currentPoint = 0;   // Index of point this gameobject is closest to on the path
+
+    public float pathPlaybackTimeInSeconds = 5.0f;  // Time it takes to traverse through the path, in seconds
+    public float currentPathPlayBackTime = 0.0f;
 
 	// Use this for initialization
 	void Start () 
@@ -48,9 +54,35 @@ public class PathFollowing : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
     {
+        if (Input.GetKeyUp(KeyCode.Space))
+            currentState = PathState.Playing;
+
         if (currentState == PathState.Drawing)
         {
             AddPointToPath();
+        }
+        else if (currentState == PathState.Playing)
+        {
+            currentPathPlayBackTime += Time.deltaTime;
+
+            // Return to start of path
+            if (currentPathPlayBackTime >= pathPlaybackTimeInSeconds)
+                currentPathPlayBackTime = 0.0f;
+
+            float tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count-1));
+
+            currentPoint = (int)Mathf.Floor(currentPathPlayBackTime / tStep);
+
+            Vector3 p1 = pathPoints[currentPoint];
+            Vector3 p2 = pathPoints[currentPoint+1];
+ 
+            float t1 = currentPoint * tStep;
+            float t2 = (currentPoint+1) * tStep;
+
+            float u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
+
+            Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u);
+            transform.position = Vector3.Lerp(p1, p2, u);
         }
 	
 	}
@@ -62,7 +94,6 @@ public class PathFollowing : MonoBehaviour
     void AddPointToPath()
     {
         Vector3 mouseWorldSpace = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Debug.Log(mouseWorldSpace.ToString());
         if (pathPoints.Count > 0)
         {
             Vector3 previousPoint = pathPoints[pathPoints.Count - 1];
