@@ -335,7 +335,20 @@ public class LevelDesignTIME : MonoBehaviour
 		if(s.name.Equals(placeBtn.name))
 		{
 			//print("Placing object");
-			PlaceObject();
+			//PlaceObject();
+			// 
+
+            // Get GameObject at touch location and add a PathFollowing component to it
+            int gridIdx = (grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false));
+            for (int i = 0; i < grid.PlacedTiles.Count; i++)
+            {
+                if (grid.PlacedTiles[i].tileIdx == gridIdx)
+                {
+                    grid.PlacedTiles[i].go.AddComponent<PathFollowing>().movableObject = true;
+                    grid.StaticPlacedTiles[i].go.AddComponent<PathFollowing>().movableObject = false;
+                }
+            }
+
 		}
 		else if(s.name.Equals(replaceBtn.name))
 		{
