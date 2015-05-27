@@ -86,9 +86,6 @@ public class LevelDesignTIME : MonoBehaviour
 		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		resetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
-
-//		GetComponent<PressGesture>().Pressed += pressedHandler;
-//		GetComponent<ReleaseGesture>().Released += releasedHandler;
 	}
 
     // Description:
@@ -228,65 +225,27 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void buttonPressedHandler(object sender, EventArgs e)
 	{
-		print ("button pressed - " + sender);
+		//print ("button pressed - " + sender);
 		GameObject s = ((Component) sender).gameObject;
 		if(s.name.Equals(placeBtn.name))
 		{
-			print("Placing object");
+			//print("Placing object");
 			PlaceObject();
 		}
 		else if(s.name.Equals(replaceBtn.name))
 		{
-			print("Replacing object");
+			//print("Replacing object");
 			ReplaceObject();
 		}
 		else if(s.name.Equals(removeBtn.name))
 		{
-			print("Removing object");
+			//print("Removing object");
 			RemoveObject();
 		}
 		else if(s.name.Equals(resetBtn.name))
 		{
-			print("Resetting game");
+			//print("Resetting game");
 			grid.Revert();
 		}
-	}
-
-	private void pressedHandler(object sender, EventArgs e)
-	{
-		print("pressed - " + ((PressGesture)sender).ActiveTouches.Count + " - " + ((PressGesture)sender).ActiveTouches[0].Position);
-//		for(int i = 0; i < ((PressGesture)sender).ActiveTouches.Count; i++)
-//		{
-//			touchManager.ActiveTouches.Add(((PressGesture)sender).ActiveTouches[i]);
-//		}
-	}
-	
-	private void releasedHandler(object sender, EventArgs e)
-	{
-//		print(((ReleaseGesture)sender).ActiveTouches.Count);
-//		if(touchManager.ActiveTouches.Count == 0)
-//		{
-//			touchManager.ActiveTouches.Clear();
-//		}
-//		else
-//		{
-//			for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
-//			{
-//				bool found = false;
-//				for(int j = 0; j < touchManager.ActiveTouches.Count; j++)
-//				{
-//					if(touchManager.ActiveTouches[i].Id == touchManager.ActiveTouches[j].Id)
-//					{
-//						found = true;
-//						break;
-//					}
-//				}
-//				
-//				if(!found)
-//				{
-//					touchManager.ActiveTouches.RemoveAt(i);
-//				}
-//			}
-//		}
 	}
 }
