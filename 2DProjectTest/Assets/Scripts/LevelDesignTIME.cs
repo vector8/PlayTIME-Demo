@@ -17,7 +17,7 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject MouseModeActiveText;
     public Vector2 PlacementUIOffsetInPixels;
 
-	public GameObject placeBtn, replaceBtn, removeBtn, resetBtn;
+	public GameObject placeBtn, replaceBtn, removeBtn, resetBtn, exitBtn;
 	
 	// Current or latest rfid tag read.
 	// Empty string means none active
@@ -90,6 +90,7 @@ public class LevelDesignTIME : MonoBehaviour
 		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		resetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		exitBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 	}
 
     // Description:
@@ -125,6 +126,9 @@ public class LevelDesignTIME : MonoBehaviour
 
 		if(touchManager.ActiveTouches.Count > 0)
 		{
+			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
+			if(gridIdx < 0)
+				return;
 			if(!removed)
 			{
 				lastTouchPosition = touchManager.ActiveTouches[0].Position;
@@ -141,7 +145,6 @@ public class LevelDesignTIME : MonoBehaviour
 				}
 				else
 				{
-					gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
 					if(dragging)
 					{
 						if(lastGridIdx != gridIdx)
@@ -280,7 +283,7 @@ public class LevelDesignTIME : MonoBehaviour
 			gridIdx = lockedPosition;
 		
 		// Check if grid spot is free
-		if (grid.IsTileFreeAtIndex(gridIdx))
+		if (gridIdx > -1 && grid.IsTileFreeAtIndex(gridIdx))
 		{
 			grid.PlaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
 		}
@@ -344,6 +347,16 @@ public class LevelDesignTIME : MonoBehaviour
             {
                 if (grid.PlacedTiles[i].tileIdx == gridIdx)
                 {
+					PathFollowing p = grid.StaticPlacedTiles[i].go.GetComponent<PathFollowing>();
+					if(p != null)
+					{
+						DestroyImmediate(p);
+						p = null;
+
+						p = grid.PlacedTiles[i].go.GetComponent<PathFollowing>();
+						DestroyImmediate(p);
+					}
+
 					grid.PlacedTiles[i].go.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, true);
 					grid.StaticPlacedTiles[i].go.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, false);
 				}
@@ -364,6 +377,14 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			//print("Resetting game");
 			grid.Revert();
+		}
+		else if(s.name.Equals(exitBtn.name))
+		{
+#if UNITY_EDITOR
+			UnityEditor.EditorApplication.isPlaying = false;
+#else
+			Application.Quit();
+#endif
 		}
 	}
 }
