@@ -344,9 +344,9 @@ public class LevelDesignTIME : MonoBehaviour
             {
                 if (grid.PlacedTiles[i].tileIdx == gridIdx)
                 {
-                    grid.PlacedTiles[i].go.AddComponent<PathFollowing>().movableObject = true;
-                    grid.StaticPlacedTiles[i].go.AddComponent<PathFollowing>().movableObject = false;
-                }
+					grid.PlacedTiles[i].go.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, true);
+					grid.StaticPlacedTiles[i].go.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, false);
+				}
             }
 
 		}
