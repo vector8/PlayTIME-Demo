@@ -17,7 +17,7 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject MouseModeActiveText;
     public Vector2 PlacementUIOffsetInPixels;
 
-	public GameObject placeBtn, replaceBtn, removeBtn, resetBtn, exitBtn;
+	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, sliderGroup, sliderTab;
 	
 	// Current or latest rfid tag read.
 	// Empty string means none active
@@ -44,6 +44,12 @@ public class LevelDesignTIME : MonoBehaviour
 	
 	private List<GameObject> objects;
 	private List<GameObject> staticObjects;
+
+	private int sliderTouchID = -1;
+	private const float SLIDER_MAX_X = 1.6455f;
+	private const float SLIDER_MIN_X = -1.6455f;
+
+	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
 	// Use this for initialization
 	void Start () 
@@ -86,11 +92,12 @@ public class LevelDesignTIME : MonoBehaviour
             MouseModeActiveText.SetActive(false);
 		
 
-		placeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		pathBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		resetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		exitBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		sliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 	}
 
     // Description:
@@ -116,7 +123,8 @@ public class LevelDesignTIME : MonoBehaviour
         {
             //PlacementUI.transform.FindChild("Place").gameObject.SetActive(false);
             PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(true);
-
+			sliderGroup.SetActive(false);
+			
             for (int i = 0; i < grid.PlacedTiles.Count; i++)
             {
                 if (grid.PlacedTiles[i].tileIdx == gridIdx)
@@ -125,8 +133,27 @@ public class LevelDesignTIME : MonoBehaviour
                     if (p != null)
                     {
                         p.startDrawingPath();
-                        break;
                     }
+
+					p = grid.PlacedTiles[i].go.GetComponent<PathFollowing>();
+					if(p != null)
+					{
+						if(p.currentState == PathFollowing.PathState.Playing)
+						{
+							sliderGroup.SetActive(true);
+						}
+						else if(p.currentState == PathFollowing.PathState.Idle)
+						{
+							p.setStateToPlaying();
+							lastObjectSelected = new Pair<GameObject, GameObject>(grid.PlacedTiles[i].go, grid.StaticPlacedTiles[i].go);
+
+							// Set slider tab to correct position
+							float xpos = ((1f - (p.pathPlaybackTimeInSeconds - 1f) / 8f) * 5.6f) - 2.8f;
+							sliderTab.transform.localPosition = new Vector3(xpos, sliderTab.transform.localPosition.y, 0f);
+						}
+					}
+
+                    break;
                 }
             }
         }
@@ -142,6 +169,49 @@ public class LevelDesignTIME : MonoBehaviour
 			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
 			if(gridIdx < 0)
 				return;
+
+			if(sliderTouchID > -1)
+			{
+				bool found = false;
+
+				for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+				{
+					if(touchManager.ActiveTouches[i].Id == sliderTouchID)
+					{
+						found = true;
+
+						//print("FOUND THE TOUCH!!");
+
+						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
+						xpos = Mathf.Max(Mathf.Min(xpos, sliderGroup.transform.position.x + SLIDER_MAX_X), sliderGroup.transform.position.x + SLIDER_MIN_X);
+
+						sliderTab.transform.position = new Vector3(xpos, sliderTab.transform.position.y, 0f);
+
+						float newPlaybackTimeSec = (1 - (sliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 1f;
+						for (int j = 0; j < grid.StaticPlacedTiles.Count; j++)
+						{
+							if (grid.StaticPlacedTiles[j].tileIdx == gridIdx)
+							{
+								PathFollowing p = grid.PlacedTiles[j].go.GetComponent<PathFollowing>();
+								if (p != null)
+								{
+									p.pathPlaybackTimeInSeconds = newPlaybackTimeSec;
+									p.currentPathPlayBackTime = 0f;
+									break;
+								}
+							}
+						}
+						
+						break;
+					}
+				}
+				
+				if(!found)
+				{
+					sliderTouchID = -1;
+				}
+			}
+
 			if(!removed)
 			{
 				lastTouchPosition = touchManager.ActiveTouches[0].Position;
@@ -199,6 +269,7 @@ public class LevelDesignTIME : MonoBehaviour
 							}
 
 							grid.RemoveObjectAtIndex(lastGridIdx);
+							lastObjectSelected = null;
 							dragging = false;
 						}
 					}
@@ -218,6 +289,19 @@ public class LevelDesignTIME : MonoBehaviour
 				database[activeKey].first.SetActive(false);
 				database[activeKey].second.SetActive(false);
 				PlacementUI.SetActive(false);
+
+				if(lastObjectSelected != null)
+				{
+					lastObjectSelected.first.transform.position = lastObjectSelected.second.transform.position + (new Vector3(0f, 10f, 0f));
+
+					PathFollowing p = lastObjectSelected.first.GetComponent<PathFollowing>();
+					if (p != null)
+					{
+						p.setStateToIdle();
+					}
+
+					lastObjectSelected = null;
+				}
 			}
 
 			if(keyToReset.Length > 0)
@@ -282,7 +366,7 @@ public class LevelDesignTIME : MonoBehaviour
         else
         {
             // Ask user if they want to replace
-            Debug.Log("Not free");
+            print("Not free");
         }
     }
 
@@ -303,7 +387,7 @@ public class LevelDesignTIME : MonoBehaviour
 		else
 		{
 			// Ask user if they want to replace
-			Debug.Log("Not free");
+			print("Not free");
 		}
 	}
 	
@@ -321,7 +405,8 @@ public class LevelDesignTIME : MonoBehaviour
 		database[activeKey].first.SetActive(false);
 		database[activeKey].second.SetActive(false);
 		PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(false);
-
+		lastObjectSelected = null;
+		
 		removed = true;
     }
 
@@ -335,6 +420,7 @@ public class LevelDesignTIME : MonoBehaviour
             gridIdx = lockedPosition;
 
 		grid.ReplaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
+		lastObjectSelected = null;
     }
 
     public void rfidFound(string key)
@@ -348,7 +434,7 @@ public class LevelDesignTIME : MonoBehaviour
 	{
 		//print ("button pressed - " + sender);
 		GameObject s = ((Component) sender).gameObject;
-		if(s.name.Equals(placeBtn.name))
+		if(s.name.Equals(pathBtn.name))
 		{
 			//print("Placing object");
 			//PlaceObject();
@@ -387,6 +473,10 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			//print("Removing object");
 			RemoveObject();
+		}
+		else if(s.name.Equals(sliderTab.name))
+		{
+			sliderTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
 		}
 		else if(s.name.Equals(resetBtn.name))
 		{

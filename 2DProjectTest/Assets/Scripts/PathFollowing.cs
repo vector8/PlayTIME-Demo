@@ -35,7 +35,7 @@ public class PathFollowing : MonoBehaviour
 
     public bool movingForward = true;   // True if positively iterating through pathPoints
 
-    public float pathDrawTimeInSeconds = 5.0f;  // Time in seconds that the path is drawn for
+    public float pathDrawTimeInSeconds = 3.0f;  // Time in seconds that the path is drawn for
     private float currentPathDrawTime = 0.0f;
 
     public Material pathRendererMaterial;
@@ -57,7 +57,7 @@ public class PathFollowing : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
     {
-        if (Input.GetKey(KeyCode.I))
+		if (Input.GetKey(KeyCode.I) || (int) (Input.GetAxisRaw ("Horizontal")) != 0 || (int) (Input.GetAxisRaw ("Vertical")) != 0)
             currentState = PathState.Playing;
 
         if (currentState == PathState.Drawing)
@@ -116,7 +116,7 @@ public class PathFollowing : MonoBehaviour
             transform.position = Vector3.Lerp(p1, p2, u);
             //Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u + " time = " + currentPathPlayBackTime);
         }
-        else
+        else if(pathRendererParent.activeSelf)
         {
             currentPathDrawTime += Time.deltaTime;
 
@@ -204,7 +204,13 @@ public class PathFollowing : MonoBehaviour
 	public void setStateToIdle()
 	{
 		currentState = PathState.Idle;
-		transform.position = pathPoints[0];
+		currentPathPlayBackTime = 0;
+		currentPoint = 0;
+	}
+
+	public void setStateToPlaying()
+	{
+		currentState = PathState.Playing;
 		currentPathPlayBackTime = 0;
 		currentPoint = 0;
 	}
