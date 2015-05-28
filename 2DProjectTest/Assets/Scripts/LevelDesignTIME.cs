@@ -116,6 +116,19 @@ public class LevelDesignTIME : MonoBehaviour
         {
             //PlacementUI.transform.FindChild("Place").gameObject.SetActive(false);
             PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(true);
+
+            for (int i = 0; i < grid.PlacedTiles.Count; i++)
+            {
+                if (grid.PlacedTiles[i].tileIdx == gridIdx)
+                {
+                    PathFollowing p = grid.StaticPlacedTiles[i].go.GetComponent<PathFollowing>();
+                    if (p != null)
+                    {
+                        p.startDrawingPath();
+                        break;
+                    }
+                }
+            }
         }
     }
 
