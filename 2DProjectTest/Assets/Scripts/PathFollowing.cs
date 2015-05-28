@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using TouchScript;
 using TouchScript.Gestures;
 
+using System;
+
 public class PathFollowing : MonoBehaviour 
 {
     private List<Vector3> pathPoints = new List<Vector3>();             // Points on path
@@ -31,6 +33,13 @@ public class PathFollowing : MonoBehaviour
 
     public bool movableObject = false;  // Does this game object move along the path? Set to true if it does
 
+    public bool movingForward = true;   // True if positively iterating through pathPoints
+
+    public float pathDrawTimeInSeconds = 5.0f;  // Time in seconds that the path is drawn for
+    private float currentPathDrawTime = 0.0f;
+
+    public Material pathRendererMaterial;
+
 	// Use this for initialization
 	void Start () 
     {
@@ -38,25 +47,11 @@ public class PathFollowing : MonoBehaviour
 
 		touchManager = TouchManager.Instance;
 
-//         // Create a new line renderer and store a reference to it
-//         GameObject go = new GameObject();
-//         go.transform.parent = pathRendererParent.transform;
-//         LineRenderer lr = gameObject.AddComponent<LineRenderer>();
-//         pathRenderer.Add(lr);
-// 
-//         lr.SetVertexCount(2);
-//         lr.SetWidth(0.10f, 0.10f);
-//         lr.SetPosition(0, new Vector3(2, 2, -1));
-//         lr.SetPosition(1, new Vector3(2, 4, -1));
-// 
-//         go = new GameObject();
-//         go.transform.parent = pathRendererParent.transform;
-//         lr = go.AddComponent<LineRenderer>();
-//         lr.SetVertexCount(2);
-//         lr.SetWidth(0.10f, 0.10f);
-//         lr.SetPosition(0, new Vector3(2, 4, -1));
-//         lr.SetPosition(1, new Vector3(4, 4, -1)	
-
+        // Init material for path renderer
+        if (!movableObject)
+        {
+            pathRendererMaterial = new Material(Shader.Find("Particles/Additive"));
+        }
     }
 	
 	// Update is called once per frame
@@ -71,26 +66,62 @@ public class PathFollowing : MonoBehaviour
         }
         else if (currentState == PathState.Playing && movableObject)
         {
-            currentPathPlayBackTime += Time.deltaTime;
+            Vector3 p1, p2;
+            float tStep, t1, t2, u;
+            tStep = tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count - 1));
 
-            // Return to start of path
-            if (currentPathPlayBackTime >= pathPlaybackTimeInSeconds)
-                currentPathPlayBackTime = 0.0f;
+            if (movingForward)
+            {
+                currentPathPlayBackTime += Time.deltaTime;
 
-            float tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count-1));
+                if (currentPathPlayBackTime >= pathPlaybackTimeInSeconds)
+                {
+                    movingForward = !movingForward;
+                    currentPathPlayBackTime = pathPlaybackTimeInSeconds;
+                    return; // avoid array out of range
+                }
 
-            currentPoint = (int)Mathf.Floor(currentPathPlayBackTime / tStep);
+                currentPoint = (int)Mathf.Floor(currentPathPlayBackTime / tStep);
 
-            Vector3 p1 = pathPoints[currentPoint];
-            Vector3 p2 = pathPoints[currentPoint+1];
- 
-            float t1 = currentPoint * tStep;
-            float t2 = (currentPoint+1) * tStep;
+                t1 = currentPoint * tStep;
+                t2 = (currentPoint + 1) * tStep;
+                p1 = pathPoints[currentPoint];
+                p2 = pathPoints[currentPoint + 1];
 
-            float u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
+                u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
 
-            //Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u);
+                transform.position = Vector3.Lerp(p1, p2, u);
+            }
+            else
+            {
+                currentPathPlayBackTime -= Time.deltaTime;
+
+                if (currentPathPlayBackTime <= 0.0f)
+                {
+                    movingForward = !movingForward;
+                    currentPathPlayBackTime = 0.0f;
+                    return;
+                }
+
+                currentPoint = (int)Mathf.Ceil(currentPathPlayBackTime / tStep);
+
+                t1 = currentPoint * tStep;
+                t2 = (currentPoint - 1) * tStep;
+                p1 = pathPoints[currentPoint];
+                p2 = pathPoints[currentPoint - 1]; 
+
+                u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
+            }
+
             transform.position = Vector3.Lerp(p1, p2, u);
+            //Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u + " time = " + currentPathPlayBackTime);
+        }
+        else
+        {
+            currentPathDrawTime += Time.deltaTime;
+
+            if (currentPathDrawTime >= pathDrawTimeInSeconds)
+                pathRendererParent.SetActive(false);
         }
 	}
 
@@ -161,6 +192,7 @@ public class PathFollowing : MonoBehaviour
         lr.SetWidth(0.10f, 0.10f);
         lr.SetPosition(0, pathPoints[pathPoints.Count - 2]);
         lr.SetPosition(1, pathPoints[pathPoints.Count - 1]);
+        //lr.material = pathRendererMaterial;
     }
 
 	public void initDrawing(int id, bool movingObject)
@@ -181,5 +213,14 @@ public class PathFollowing : MonoBehaviour
 	{
 		print ("path destroyed.");
 		DestroyImmediate(pathRendererParent);
+        Destroy(this.GetComponent<Renderer>().material);
 	}
+
+    // Meant to be called when this game object is touched
+    public void startDrawingPath()
+    {
+        currentPathDrawTime = 0.0f;
+        if (pathRendererParent)
+            pathRendererParent.SetActive(true);
+    }
 }
