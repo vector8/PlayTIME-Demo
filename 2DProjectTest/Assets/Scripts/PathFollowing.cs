@@ -213,7 +213,7 @@ public class PathFollowing : MonoBehaviour
 	{
 		print ("path destroyed.");
 		DestroyImmediate(pathRendererParent);
-        Destroy(this.GetComponent<Renderer>().material);
+        //Destroy(this.GetComponent<Renderer>().material);
 	}
 
     // Meant to be called when this game object is touched
