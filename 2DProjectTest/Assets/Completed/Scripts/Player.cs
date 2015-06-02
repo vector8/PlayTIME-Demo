@@ -220,6 +220,8 @@ namespace Completed
 		private void Restart ()
 		{
 			//Load the last scene loaded, in this case Main, the only scene in the game.
+			Completed.GameManager.instance.GetBoardScript().PlacedTiles.Clear();
+			Completed.GameManager.instance.GetBoardScript().StaticPlacedTiles.Clear();
 			Application.LoadLevel (Application.loadedLevel);
 		}
 		
@@ -235,7 +237,7 @@ namespace Completed
 			food -= loss;
 			
 			//Update the food display with the new total.
-			foodText.text = "-"+ loss + " Food: " + food;
+			//foodText.text = "-"+ loss + " Food: " + food;
 			
 			//Check to see if game has ended.
 			CheckIfGameOver ();
