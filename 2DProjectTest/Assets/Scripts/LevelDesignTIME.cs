@@ -51,6 +51,8 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
+	private string pendingKey = "";
+
 	// Use this for initialization
 	void Start () 
     {
@@ -58,31 +60,31 @@ public class LevelDesignTIME : MonoBehaviour
         // Key will be replaced with rfid values
         // Instantiated them for displaying purposes only
 		// Enemy
-		Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>(Instantiate(prefabs[0]), Instantiate(staticPrefabs[0]));
-		p.first.SetActive(false);
-		p.second.SetActive(false);
-        database.Add("4d004aef91", p);
-		// Soda
-		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[1]), Instantiate(staticPrefabs[1]));
-		p.first.SetActive(false);
-		p.second.SetActive(false);
-		database.Add("4d004ab4ee", p);
-		// Wall
-		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[2]), Instantiate(staticPrefabs[2]));
-		p.first.SetActive(false);
-		p.second.SetActive(false);
-		database.Add("4d004aa4ee", p);
-		// Player
-		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[3]), Instantiate(staticPrefabs[3]));
-		p.first.SetActive(false);
-		p.second.SetActive(false);
-		database.Add("0a00ec698c", p);
+//		Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>(Instantiate(prefabs[0]), Instantiate(staticPrefabs[0]));
+//		p.first.SetActive(false);
+//		p.second.SetActive(false);
+//		database.Add("4d004aef91", p);
+//		// Soda
+//		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[1]), Instantiate(staticPrefabs[1]));
+//		p.first.SetActive(false);
+//		p.second.SetActive(false);
+//		database.Add("4d004ab4ee", p);
+//		// Wall
+//		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[2]), Instantiate(staticPrefabs[2]));
+//		p.first.SetActive(false);
+//		p.second.SetActive(false);
+//		database.Add("4d004aa4ee", p);
+//		// Player
+//		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[3]), Instantiate(staticPrefabs[3]));
+//		p.first.SetActive(false);
+//		p.second.SetActive(false);
+//		database.Add("0a00ec698c", p);
 
         grid = Completed.GameManager.instance.GetBoardScript();
 
 		touchManager = TouchManager.Instance;
 
-		activeKey = "4d004aef91";
+		//activeKey = "0a00ec698c";
         //database[activeKey].SetActive(true);
         //PlacementUI.SetActive(false);
 
@@ -116,13 +118,13 @@ public class LevelDesignTIME : MonoBehaviour
         // Display correct menu
         if (grid.IsTileFreeAtIndex(gridIdx))
         {
-            //PlacementUI.transform.FindChild("Place").gameObject.SetActive(true);
-            PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(false);
+            PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(false);
+            PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(false);
         }
         else
         {
-            //PlacementUI.transform.FindChild("Place").gameObject.SetActive(false);
-            PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(true);
+            PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(true);
+            PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(false);
 			sliderGroup.SetActive(false);
 			
             for (int i = 0; i < grid.PlacedTiles.Count; i++)
@@ -138,6 +140,8 @@ public class LevelDesignTIME : MonoBehaviour
 					p = grid.PlacedTiles[i].go.GetComponent<PathFollowing>();
 					if(p != null)
 					{
+           				PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(true);
+
 						if(p.currentState == PathFollowing.PathState.Playing)
 						{
 							sliderGroup.SetActive(true);
@@ -215,7 +219,7 @@ public class LevelDesignTIME : MonoBehaviour
 			if(!removed)
 			{
 				lastTouchPosition = touchManager.ActiveTouches[0].Position;
-				if(!database[activeKey].first.activeSelf)
+				if(activeKey != "" && !database[activeKey].first.activeSelf)
 				{
 					PlacementUI.SetActive(true);
 					database[activeKey].first.SetActive(true);
@@ -273,17 +277,20 @@ public class LevelDesignTIME : MonoBehaviour
 							dragging = false;
 						}
 					}
-					
-					Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-					database[activeKey].first.transform.position = new Vector3(wsTilePos.x, wsTilePos.y + 10, 1.0f);
-					database[activeKey].second.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-					UpdatePlacementUI(gridIdx);
+
+					if(activeKey != "")
+					{
+						Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
+						database[activeKey].first.transform.position = new Vector3(wsTilePos.x, wsTilePos.y + 10, 1.0f);
+						database[activeKey].second.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+						UpdatePlacementUI(gridIdx);
+					}
 				}
 			}
 		}
 		else
 		{
-			if(database[activeKey].first.activeSelf)
+			if(activeKey != "" && database[activeKey].first.activeSelf)
 			{
 				PlaceObject(lastTouchPosition);
 				database[activeKey].first.SetActive(false);
@@ -340,7 +347,8 @@ public class LevelDesignTIME : MonoBehaviour
         // Cycle through the prefabs 
         if (Input.GetKeyUp(KeyCode.RightShift))
         {
-			rfidFound("0a00ec698c");
+			print("rfidFound calling...");
+			rfidFound("4d004aef91");
         }
 
         if (Input.GetKeyUp(KeyCode.P))
@@ -404,7 +412,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 		database[activeKey].first.SetActive(false);
 		database[activeKey].second.SetActive(false);
-		PlacementUI.transform.FindChild("ReplaceRemove").gameObject.SetActive(false);
+		PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(false);
 		lastObjectSelected = null;
 		
 		removed = true;
@@ -425,10 +433,94 @@ public class LevelDesignTIME : MonoBehaviour
 
     public void rfidFound(string key)
     {
-		database[activeKey].first.SetActive(false);
-		database[activeKey].second.SetActive(false);
-		activeKey = key;
+		if(database.ContainsKey(key))
+		{
+			if(activeKey != "")
+			{
+				database[activeKey].first.SetActive(false);
+				database[activeKey].second.SetActive(false);
+			}
+			activeKey = key;
+		}
+		else
+		{
+			pendingKey = key;
+
+			string url = "http://localhost/playtime/getComponents.php?rfidKey=" + pendingKey;
+			
+			print("fetching key " + pendingKey);
+			
+			StartCoroutine(pollDatabase(url));
+		}
     }
+
+	private IEnumerator pollDatabase(string url)
+	{
+		WWW www = new WWW(url);
+		WWWForm form = new WWWForm();
+		
+		yield return www;
+		
+		string[] delimiters = {"<br>"};
+		string[] results = www.text.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+		if(results.Length == 0)
+		{
+			print ("No components were found for RFID key " + pendingKey + " in the database.");
+		}
+		else
+		{
+			if(activeKey != "")
+			{
+				database[activeKey].first.SetActive(false);
+				database[activeKey].second.SetActive(false);
+			}
+			activeKey = pendingKey;
+
+			Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>();
+			
+			for(int i = 0; i < results.Length; i++)
+			{
+				print(results[i]);
+				string[] delim = {","};
+				string[] vals = results[i].Split(delim, StringSplitOptions.None);
+				addComponentByName(p.first, vals[0], false, vals[1], vals[2]);
+				addComponentByName(p.second, vals[0], true, vals[1], vals[2]);
+			}
+
+			p.first.SetActive(false);
+			p.second.SetActive(false);
+			database.Add(activeKey, p);
+		}
+
+		pendingKey = "";
+	}
+
+	private void addComponentByName(GameObject go, string name, bool isStatic, string data1, string data2)
+	{
+		switch(name)
+		{
+		case "PathFollowing":
+			go.AddComponent<PathFollowing>().initDrawing(0, !isStatic).setStateToIdle();
+			break;
+		case "SpriteRenderer":
+			go.AddComponent<SpriteRenderer>();
+			SpriteRenderer r = go.GetComponent<SpriteRenderer>();
+			if(data1.Length > 0)
+			{
+				r.sprite = Resources.Load<Sprite>(data1);
+			}
+			if(data2.Length > 0)
+			{
+				r.sortingLayerName = data2;
+			}
+			break;
+		case "Animator":
+			go.AddComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(data1);
+			break;
+		default:
+			break;
+		}
+	}
 
 	private void buttonPressedHandler(object sender, EventArgs e)
 	{
