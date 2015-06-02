@@ -64,11 +64,11 @@ public class PathFollowing : MonoBehaviour
         {
             AddPointToPath();
         }
-        else if (currentState == PathState.Playing && movableObject)
+        else if (currentState == PathState.Playing && movableObject && pathPoints.Count > 0)
         {
             Vector3 p1, p2;
             float tStep, t1, t2, u;
-            tStep = tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count - 1));
+            tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count - 1));
 
             if (movingForward)
             {
@@ -195,24 +195,30 @@ public class PathFollowing : MonoBehaviour
         //lr.material = pathRendererMaterial;
     }
 
-	public void initDrawing(int id, bool movingObject)
+	public PathFollowing initDrawing(int id, bool movingObject)
 	{
 		touchID = id;
 		movableObject = movingObject;
+
+		return this;
 	}
 
-	public void setStateToIdle()
+	public PathFollowing setStateToIdle()
 	{
 		currentState = PathState.Idle;
 		currentPathPlayBackTime = 0;
 		currentPoint = 0;
+		
+		return this;
 	}
 
-	public void setStateToPlaying()
+	public PathFollowing setStateToPlaying()
 	{
 		currentState = PathState.Playing;
 		currentPathPlayBackTime = 0;
 		currentPoint = 0;
+		
+		return this;
 	}
 
 	void OnDestroy()
@@ -223,10 +229,12 @@ public class PathFollowing : MonoBehaviour
 	}
 
     // Meant to be called when this game object is touched
-    public void startDrawingPath()
+	public PathFollowing startDrawingPath()
     {
         currentPathDrawTime = 0.0f;
         if (pathRendererParent)
-            pathRendererParent.SetActive(true);
+			pathRendererParent.SetActive(true);
+		
+		return this;
     }
 }
