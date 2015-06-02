@@ -52,6 +52,12 @@ public class PhidgetsController : MonoBehaviour
 			currentSelectors.SetActive(false);
 		}
 	}
+
+	public void clickThroughToNextScreen()
+	{
+		startScreen.SetActive(false);
+		currentSelectors = Instantiate<GameObject>(selectorsPrefab);
+	}
 	
 	void OnGUI()
 	{
