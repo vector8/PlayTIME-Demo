@@ -26,6 +26,8 @@ namespace Completed
 			
 			//By storing the reciprocal of the move time we can use it by multiplying instead of dividing, this is more efficient.
 			inverseMoveTime = 1f / moveTime;
+
+			blockingLayer = 1 << LayerMask.NameToLayer("BlockingLayer");
 		}
 		
 		

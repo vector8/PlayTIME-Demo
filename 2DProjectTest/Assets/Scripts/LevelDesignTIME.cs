@@ -7,7 +7,10 @@ using TouchScript.Gestures;
 
 public class LevelDesignTIME : MonoBehaviour 
 {
-    // Fake database
+	// Real database
+	public string databaseAddress;
+
+    // Local database to cache objects
     // string is the key (rfid), GameObject is the data (prefab)
 	public Dictionary<string, Pair<GameObject, GameObject>> database = new Dictionary<string, Pair<GameObject, GameObject>>();
 	public GameObject[] prefabs;
@@ -39,6 +42,7 @@ public class LevelDesignTIME : MonoBehaviour
 	private bool dragging = true;
 	private int lastGridIdx;
 	private string keyToReset = "";
+	private bool shouldResetKey = false;
 
     private bool previewMode = false;
 	
@@ -52,6 +56,9 @@ public class LevelDesignTIME : MonoBehaviour
 	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
 	private string pendingKey = "";
+
+	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c"};
+	private int testIndex = -1;
 
 	// Use this for initialization
 	void Start () 
@@ -125,6 +132,7 @@ public class LevelDesignTIME : MonoBehaviour
         {
             PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(true);
             PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(false);
+			PlacementUI.transform.Find("ReplaceRemove/ReplaceBtn").gameObject.SetActive(activeKey != "");
 			sliderGroup.SetActive(false);
 			
             for (int i = 0; i < grid.PlacedTiles.Count; i++)
@@ -219,15 +227,20 @@ public class LevelDesignTIME : MonoBehaviour
 			if(!removed)
 			{
 				lastTouchPosition = touchManager.ActiveTouches[0].Position;
-				if(activeKey != "" && !database[activeKey].first.activeSelf)
+				if(activeKey == "" && !PlacementUI.activeSelf || activeKey != "" && !database[activeKey].first.activeSelf)
 				{
 					PlacementUI.SetActive(true);
-					database[activeKey].first.SetActive(true);
-					database[activeKey].second.SetActive(true);
-					if(!grid.IsTileFreeAtIndex(grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true)))
+
+					if(activeKey != "")
+					{
+						database[activeKey].first.SetActive(true);
+						database[activeKey].second.SetActive(true);
+					}
+
+					if(!grid.IsTileFreeAtIndex(gridIdx))
 					{
 						dragging = true;
-						lastGridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
+						lastGridIdx = gridIdx;
 					}
 				}
 				else
@@ -236,8 +249,12 @@ public class LevelDesignTIME : MonoBehaviour
 					{
 						if(lastGridIdx != gridIdx)
 						{
-							database[activeKey].first.SetActive(false);
-							database[activeKey].second.SetActive(false);
+							if(activeKey != "")
+							{
+								database[activeKey].first.SetActive(false);
+								database[activeKey].second.SetActive(false);
+							}
+
 							string keyToActivate = "";
 							string objectName = "";
 							Dictionary<string, Pair<GameObject, GameObject>>.KeyCollection keys = database.Keys;
@@ -266,6 +283,7 @@ public class LevelDesignTIME : MonoBehaviour
 								activeKey = keyToActivate;
 								database[activeKey].first.SetActive(true);
 								database[activeKey].second.SetActive(true);
+								shouldResetKey = true;
 							}
 							else
 							{
@@ -283,19 +301,19 @@ public class LevelDesignTIME : MonoBehaviour
 						Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
 						database[activeKey].first.transform.position = new Vector3(wsTilePos.x, wsTilePos.y + 10, 1.0f);
 						database[activeKey].second.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
-						UpdatePlacementUI(gridIdx);
 					}
+					UpdatePlacementUI(gridIdx);
 				}
 			}
 		}
 		else
 		{
+			PlacementUI.SetActive(false);
 			if(activeKey != "" && database[activeKey].first.activeSelf)
 			{
 				PlaceObject(lastTouchPosition);
 				database[activeKey].first.SetActive(false);
 				database[activeKey].second.SetActive(false);
-				PlacementUI.SetActive(false);
 
 				if(lastObjectSelected != null)
 				{
@@ -311,10 +329,11 @@ public class LevelDesignTIME : MonoBehaviour
 				}
 			}
 
-			if(keyToReset.Length > 0)
+			if(shouldResetKey)
 			{
 				activeKey = keyToReset;
 				keyToReset = "";
+				shouldResetKey = false;
 			}
 
 			removed = false;
@@ -347,8 +366,12 @@ public class LevelDesignTIME : MonoBehaviour
         // Cycle through the prefabs 
         if (Input.GetKeyUp(KeyCode.RightShift))
         {
-			print("rfidFound calling...");
-			rfidFound("4d004aef91");
+			testIndex++;
+			if(testIndex >= testRFIDKeys.Length)
+			{
+				testIndex = 0;
+			}
+			rfidFound(testRFIDKeys[testIndex]);
         }
 
         if (Input.GetKeyUp(KeyCode.P))
@@ -410,8 +433,11 @@ public class LevelDesignTIME : MonoBehaviour
 
         grid.RemoveObjectAtIndex(gridIdx);
 
-		database[activeKey].first.SetActive(false);
-		database[activeKey].second.SetActive(false);
+		if(activeKey != "")
+		{
+			database[activeKey].first.SetActive(false);
+			database[activeKey].second.SetActive(false);
+		}
 		PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(false);
 		lastObjectSelected = null;
 		
@@ -433,20 +459,22 @@ public class LevelDesignTIME : MonoBehaviour
 
     public void rfidFound(string key)
     {
+		if(activeKey != "")
+		{
+			database[activeKey].first.SetActive(false);
+			database[activeKey].second.SetActive(false);
+			activeKey = "";
+		}
+
 		if(database.ContainsKey(key))
 		{
-			if(activeKey != "")
-			{
-				database[activeKey].first.SetActive(false);
-				database[activeKey].second.SetActive(false);
-			}
 			activeKey = key;
 		}
 		else
 		{
 			pendingKey = key;
 
-			string url = "http://localhost/playtime/getComponents.php?rfidKey=" + pendingKey;
+			string url = "http://" + databaseAddress + "/playtime/getComponents.php";
 			
 			print("fetching key " + pendingKey);
 			
@@ -456,9 +484,12 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private IEnumerator pollDatabase(string url)
 	{
-		WWW www = new WWW(url);
 		WWWForm form = new WWWForm();
+
+		form.AddField("rfidKey", pendingKey);
 		
+		WWW www = new WWW(url, form);
+
 		yield return www;
 		
 		string[] delimiters = {"<br>"};
@@ -477,14 +508,16 @@ public class LevelDesignTIME : MonoBehaviour
 			activeKey = pendingKey;
 
 			Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>();
-			
+
 			for(int i = 0; i < results.Length; i++)
 			{
 				print(results[i]);
 				string[] delim = {","};
 				string[] vals = results[i].Split(delim, StringSplitOptions.None);
-				addComponentByName(p.first, vals[0], false, vals[1], vals[2]);
-				addComponentByName(p.second, vals[0], true, vals[1], vals[2]);
+				p.first.name = vals[0];
+				p.second.name = vals[0];
+				addComponentByName(p.first, vals[1], false, vals[2], vals[3]);
+				addComponentByName(p.second, vals[1], true, vals[2], vals[3]);
 			}
 
 			p.first.SetActive(false);
@@ -497,6 +530,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void addComponentByName(GameObject go, string name, bool isStatic, string data1, string data2)
 	{
+		go.layer = LayerMask.NameToLayer("BlockingLayer");
 		switch(name)
 		{
 		case "PathFollowing":
@@ -507,7 +541,24 @@ public class LevelDesignTIME : MonoBehaviour
 			SpriteRenderer r = go.GetComponent<SpriteRenderer>();
 			if(data1.Length > 0)
 			{
-				r.sprite = Resources.Load<Sprite>(data1);
+				int index = data1.LastIndexOf('_');
+				if(index > 0)
+				{
+					int spriteIndex;
+					if(Int32.TryParse(data1.Substring(index + 1), out spriteIndex))
+					{
+						string path = data1.Substring(0, index);
+						Sprite[] sprites = Resources.LoadAll<Sprite>(path);
+						if(spriteIndex < sprites.Length)
+						{
+							r.sprite = sprites[spriteIndex];
+						}
+					}
+				}
+				else
+				{
+					r.sprite = Resources.Load<Sprite>(data1);
+				}
 			}
 			if(data2.Length > 0)
 			{
@@ -517,7 +568,38 @@ public class LevelDesignTIME : MonoBehaviour
 		case "Animator":
 			go.AddComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(data1);
 			break;
+		case "BoxCollider2D":
+			go.AddComponent<BoxCollider2D>();
+			BoxCollider2D bc = go.GetComponent<BoxCollider2D>();
+			bool trigger;
+			if(Boolean.TryParse(data1, out trigger))
+			{
+				bc.isTrigger = trigger;
+			}
+			break;
+		case "RigidBody2D":
+			go.AddComponent<Rigidbody2D>();
+			Rigidbody2D rb = go.GetComponent<Rigidbody2D>();
+			bool kinematic;
+			if(Boolean.TryParse(data1, out kinematic))
+			{
+				rb.isKinematic = kinematic;
+			}
+			break;
+		case "Tag":
+			if(!isStatic)
+			{
+				go.tag = data1;
+			}
+			break;
+		case "CustomScript":
+			if(!isStatic)
+			{
+				go.AddComponent(Type.GetType(data1));
+			}
+			break;
 		default:
+			print ("Component " + name + " is undefined.");
 			break;
 		}
 	}
