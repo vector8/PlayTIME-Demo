@@ -17,30 +17,24 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject[] staticPrefabs;
 
     public GameObject PlacementUI;
-    public GameObject MouseModeActiveText;
     public Vector2 PlacementUIOffsetInPixels;
 
-	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, sliderGroup, sliderTab;
+	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, sliderGroup, sliderTab, cameraBtn, cameraPanel, cameraOutline;
+	public GameObject horizontalScrollbar, verticalScrollbar;
 	
 	// Current or latest rfid tag read.
 	// Empty string means none active
 	public string activeKey = "";
 
 	private ITouchManager touchManager;
+	private LevelManager levelManager;
 
     private Vector3 lastTouchPosition;
-
-    // Reference to the board (Grid)
-    private Completed.BoardManager grid;
-
-    // Prevent UI from moving when using mouse as input
-    public bool mouseMode = false;
-    private bool lockPositions = false;
-    private int lockedPosition;
+	private Vector3 dragStartPosition;
 
 	private bool removed = false;
 	private bool dragging = true;
-	private int lastGridIdx;
+	//private int lastGridIdx;
 	private string keyToReset = "";
 	private bool shouldResetKey = false;
 
@@ -63,67 +57,34 @@ public class LevelDesignTIME : MonoBehaviour
 	// Use this for initialization
 	void Start () 
     {
-		// Add things to the data base
-        // Key will be replaced with rfid values
-        // Instantiated them for displaying purposes only
-		// Enemy
-//		Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>(Instantiate(prefabs[0]), Instantiate(staticPrefabs[0]));
-//		p.first.SetActive(false);
-//		p.second.SetActive(false);
-//		database.Add("4d004aef91", p);
-//		// Soda
-//		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[1]), Instantiate(staticPrefabs[1]));
-//		p.first.SetActive(false);
-//		p.second.SetActive(false);
-//		database.Add("4d004ab4ee", p);
-//		// Wall
-//		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[2]), Instantiate(staticPrefabs[2]));
-//		p.first.SetActive(false);
-//		p.second.SetActive(false);
-//		database.Add("4d004aa4ee", p);
-//		// Player
-//		p = new Pair<GameObject, GameObject>(Instantiate(prefabs[3]), Instantiate(staticPrefabs[3]));
-//		p.first.SetActive(false);
-//		p.second.SetActive(false);
-//		database.Add("0a00ec698c", p);
-
-        grid = Completed.GameManager.instance.GetBoardScript();
-
 		touchManager = TouchManager.Instance;
-
-		//activeKey = "0a00ec698c";
-        //database[activeKey].SetActive(true);
-        //PlacementUI.SetActive(false);
-
-        if (mouseMode)
-            MouseModeActiveText.SetActive(true);
-        else
-            MouseModeActiveText.SetActive(false);
+		gameObject.AddComponent<LevelManager>();
+		levelManager = LevelManager.instance;
 		
-
 		pathBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		resetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		exitBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		sliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		cameraBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		horizontalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		verticalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 	}
 
     // Description:
     // Updates the UI position and displays the correct
     // menu for the input index in the grid.
-    private void UpdatePlacementUI(int gridIdx, bool updatePosition = true)
+    private void UpdatePlacementUI(Vector2 touchPosition, bool updatePosition = true)
     {
         // Update position
         if (updatePosition)
         {
-            Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-            //PlacementUI.transform.position = Camera.main.WorldToScreenPoint(new Vector3(wsTilePos.x, wsTilePos.y, 1.0f)) + new Vector3(PlacementUIOffsetInPixels.x, PlacementUIOffsetInPixels.y, 0.0f);
-			PlacementUI.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, -1.0f);
+			PlacementUI.transform.position = new Vector3(touchPosition.x, touchPosition.y, -1.0f);
         }
 
         // Display correct menu
-        if (grid.IsTileFreeAtIndex(gridIdx))
+		if(!levelManager.isObjectAtPosition(touchPosition))
         {
             PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(false);
             PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(false);
@@ -135,52 +96,44 @@ public class LevelDesignTIME : MonoBehaviour
 			PlacementUI.transform.Find("ReplaceRemove/ReplaceBtn").gameObject.SetActive(activeKey != "");
 			sliderGroup.SetActive(false);
 			
-            for (int i = 0; i < grid.PlacedTiles.Count; i++)
+			Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+			PathFollowing p = selectedObject.second.GetComponent<PathFollowing>();
+            if (p != null)
             {
-                if (grid.PlacedTiles[i].tileIdx == gridIdx)
-                {
-                    PathFollowing p = grid.StaticPlacedTiles[i].go.GetComponent<PathFollowing>();
-                    if (p != null)
-                    {
-                        p.startDrawingPath();
-                    }
-
-					p = grid.PlacedTiles[i].go.GetComponent<PathFollowing>();
-					if(p != null)
-					{
-           				PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(true);
-
-						if(p.currentState == PathFollowing.PathState.Playing)
-						{
-							sliderGroup.SetActive(true);
-						}
-						else if(p.currentState == PathFollowing.PathState.Idle)
-						{
-							p.setStateToPlaying();
-							lastObjectSelected = new Pair<GameObject, GameObject>(grid.PlacedTiles[i].go, grid.StaticPlacedTiles[i].go);
-
-							// Set slider tab to correct position
-							float xpos = ((1f - (p.pathPlaybackTimeInSeconds - 1f) / 8f) * 5.6f) - 2.8f;
-							sliderTab.transform.localPosition = new Vector3(xpos, sliderTab.transform.localPosition.y, 0f);
-						}
-					}
-
-                    break;
-                }
+                p.startDrawingPath();
             }
+
+			p = selectedObject.first.GetComponent<PathFollowing>();
+			if(p != null)
+			{
+   				PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(true);
+
+				if(p.currentState == PathFollowing.PathState.Playing)
+				{
+					sliderGroup.SetActive(true);
+				}
+				else if(p.currentState == PathFollowing.PathState.Idle)
+				{
+					p.setStateToPlaying();
+					lastObjectSelected = selectedObject;
+
+					// Set slider tab to correct position
+					float xpos = ((1f - (p.pathPlaybackTimeInSeconds - 1f) / 8f) * 5.6f) - 2.8f;
+					sliderTab.transform.localPosition = new Vector3(xpos, sliderTab.transform.localPosition.y, 0f);
+				}
+			}
         }
     }
 
 	// Update is called once per frame
 	void Update ()
     {
-		int gridIdx;
+		if(cameraPanel.activeSelf)
+			return;
 
 		if(touchManager.ActiveTouches.Count > 0)
 		{
-			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, true);
-			if(gridIdx < 0)
-				return;
+			Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position);
 
 			if(sliderTouchID > -1)
 			{
@@ -192,25 +145,20 @@ public class LevelDesignTIME : MonoBehaviour
 					{
 						found = true;
 
-						//print("FOUND THE TOUCH!!");
-
 						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
 						xpos = Mathf.Max(Mathf.Min(xpos, sliderGroup.transform.position.x + SLIDER_MAX_X), sliderGroup.transform.position.x + SLIDER_MIN_X);
 
 						sliderTab.transform.position = new Vector3(xpos, sliderTab.transform.position.y, 0f);
 
 						float newPlaybackTimeSec = (1 - (sliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 1f;
-						for (int j = 0; j < grid.StaticPlacedTiles.Count; j++)
+						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+						if(selectedObject != null)
 						{
-							if (grid.StaticPlacedTiles[j].tileIdx == gridIdx)
+							PathFollowing p = selectedObject.first.GetComponent<PathFollowing>();
+							if (p != null)
 							{
-								PathFollowing p = grid.PlacedTiles[j].go.GetComponent<PathFollowing>();
-								if (p != null)
-								{
-									p.pathPlaybackTimeInSeconds = newPlaybackTimeSec;
-									p.currentPathPlayBackTime = 0f;
-									break;
-								}
+								p.pathPlaybackTimeInSeconds = newPlaybackTimeSec;
+								p.currentPathPlayBackTime = 0f;
 							}
 						}
 						
@@ -226,7 +174,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 			if(!removed)
 			{
-				lastTouchPosition = touchManager.ActiveTouches[0].Position;
+				lastTouchPosition = touchPosition;
 				if(activeKey == "" && !PlacementUI.activeSelf || activeKey != "" && !database[activeKey].first.activeSelf)
 				{
 					PlacementUI.SetActive(true);
@@ -237,17 +185,18 @@ public class LevelDesignTIME : MonoBehaviour
 						database[activeKey].second.SetActive(true);
 					}
 
-					if(!grid.IsTileFreeAtIndex(gridIdx))
+					if(levelManager.isObjectAtPosition(touchPosition))
 					{
 						dragging = true;
-						lastGridIdx = gridIdx;
+						dragStartPosition = touchPosition;
 					}
 				}
 				else
 				{
 					if(dragging)
 					{
-						if(lastGridIdx != gridIdx)
+						print (Vector2.Distance(touchPosition, dragStartPosition));
+						if(Vector2.Distance(touchPosition, dragStartPosition) > 0.5f)// lastGridIdx != gridIdx)
 						{
 							if(activeKey != "")
 							{
@@ -258,21 +207,13 @@ public class LevelDesignTIME : MonoBehaviour
 							string keyToActivate = "";
 							string objectName = "";
 							Dictionary<string, Pair<GameObject, GameObject>>.KeyCollection keys = database.Keys;
-							for (int i = 0; i < grid.StaticPlacedTiles.Count; i++)
+							objectName = levelManager.getObjectAtPosition(dragStartPosition).second.name;
+
+							foreach(KeyValuePair<string, Pair<GameObject, GameObject>> entry in database)
 							{
-								if (grid.StaticPlacedTiles[i].tileIdx == lastGridIdx)
+								if(objectName == string.Format("{0}(Clone)", entry.Value.second.name))
 								{
-									objectName = grid.StaticPlacedTiles[i].go.name;
-
-									foreach(KeyValuePair<string, Pair<GameObject, GameObject>> entry in database)
-									{
-										if(objectName == string.Format("{0}(Clone)", entry.Value.second.name))
-										{
-											keyToActivate = entry.Key;
-											break;
-										}
-									}
-
+									keyToActivate = entry.Key;
 									break;
 								}
 							}
@@ -290,7 +231,8 @@ public class LevelDesignTIME : MonoBehaviour
 								print("ERROR: could not find object " + objectName + " in database.");
 							}
 
-							grid.RemoveObjectAtIndex(lastGridIdx);
+							levelManager.removeObject(dragStartPosition);
+							//grid.RemoveObjectAtIndex(lastGridIdx);
 							lastObjectSelected = null;
 							dragging = false;
 						}
@@ -298,11 +240,10 @@ public class LevelDesignTIME : MonoBehaviour
 
 					if(activeKey != "")
 					{
-						Vector2 wsTilePos = grid.GetPositionFromIndex(gridIdx);
-						database[activeKey].first.transform.position = new Vector3(wsTilePos.x, wsTilePos.y + 10, 1.0f);
-						database[activeKey].second.transform.position = new Vector3(wsTilePos.x, wsTilePos.y, 1.0f);
+						database[activeKey].first.transform.position = new Vector3(touchPosition.x, touchPosition.y + 10, 1.0f);
+						database[activeKey].second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
 					}
-					UpdatePlacementUI(gridIdx);
+					UpdatePlacementUI(touchPosition);
 				}
 			}
 		}
@@ -340,29 +281,6 @@ public class LevelDesignTIME : MonoBehaviour
 			dragging = false;
 		}
 
-//        if (Input.GetKeyUp(KeyCode.C))
-//        {
-//            PlaceObject();
-//        }
-//
-//        if (Input.GetKeyUp(KeyCode.V))
-//        {
-//            ReplaceObject();
-//        }
-//
-//        if (Input.GetKeyUp(KeyCode.B))
-//        {
-//            RemoveObject();
-//        }
-//
-//
-//        // Toggle mouse mode
-//        if (Input.GetKeyUp(KeyCode.M))
-//        {
-//            mouseMode = !mouseMode;
-//            MouseModeActiveText.SetActive(mouseMode);
-//        }
-
         // Cycle through the prefabs 
         if (Input.GetKeyUp(KeyCode.RightShift))
         {
@@ -376,44 +294,16 @@ public class LevelDesignTIME : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.P))
         {
-			grid.Revert();
+			levelManager.revert();
         }
 	}
 
-    public void PlaceObject()
-    {
-        int gridIdx = 0;
-
-        if (!mouseMode)
-			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false);
-        else
-            gridIdx = lockedPosition;
-
-        // Check if grid spot is free
-        if (grid.IsTileFreeAtIndex(gridIdx))
-        {
-			grid.PlaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
-        }
-        else
-        {
-            // Ask user if they want to replace
-            print("Not free");
-        }
-    }
-
 	public void PlaceObject(Vector2 position)
 	{
-		int gridIdx = 0;
-		
-		if (!mouseMode)
-			gridIdx = grid.GetTileIndexInGridAtPoint(position, false);
-		else
-			gridIdx = lockedPosition;
-		
-		// Check if grid spot is free
-		if (gridIdx > -1 && grid.IsTileFreeAtIndex(gridIdx))
+		// Check if spot is free
+		if (!levelManager.isObjectAtPosition(position))
 		{
-			grid.PlaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
+			levelManager.placeObject(position, database[activeKey].first, database[activeKey].second, this.transform);
 		}
 		else
 		{
@@ -424,36 +314,22 @@ public class LevelDesignTIME : MonoBehaviour
 	
 	public void RemoveObject()
 	{
-		int gridIdx = 0;
-		
-		if (!mouseMode)
-			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false);
-        else
-            gridIdx = lockedPosition;
-
-        grid.RemoveObjectAtIndex(gridIdx);
+		levelManager.removeObject(Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position));
 
 		if(activeKey != "")
 		{
 			database[activeKey].first.SetActive(false);
 			database[activeKey].second.SetActive(false);
 		}
+
 		PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(false);
 		lastObjectSelected = null;
-		
 		removed = true;
     }
 
     public void ReplaceObject()
     {
-        int gridIdx = 0;
-
-        if (!mouseMode)
-			gridIdx = grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false);
-        else
-            gridIdx = lockedPosition;
-
-		grid.ReplaceObjectAtIndex(gridIdx, database[activeKey].first, database[activeKey].second, this.transform);
+		levelManager.replaceObject(Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position), database[activeKey].first, database[activeKey].second, this.transform);
 		lastObjectSelected = null;
     }
 
@@ -606,46 +482,33 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void buttonPressedHandler(object sender, EventArgs e)
 	{
-		//print ("button pressed - " + sender);
 		GameObject s = ((Component) sender).gameObject;
 		if(s.name.Equals(pathBtn.name))
 		{
-			//print("Placing object");
-			//PlaceObject();
-			// 
-
             // Get GameObject at touch location and add a PathFollowing component to it
-            int gridIdx = (grid.GetTileIndexInGridAtPoint(touchManager.ActiveTouches[0].Position, false));
-            for (int i = 0; i < grid.PlacedTiles.Count; i++)
-            {
-                if (grid.PlacedTiles[i].tileIdx == gridIdx)
-                {
-					PathFollowing p = grid.StaticPlacedTiles[i].go.GetComponent<PathFollowing>();
-					if(p != null)
-					{
-						DestroyImmediate(p);
-						p = null;
-
-						p = grid.PlacedTiles[i].go.GetComponent<PathFollowing>();
-						DestroyImmediate(p);
-					}
-
-					grid.PlacedTiles[i].go.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, true);
-					grid.StaticPlacedTiles[i].go.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, false);
-
-					break;
+			Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position));
+			if(selectedObject != null)
+			{
+				PathFollowing p = selectedObject.second.GetComponent<PathFollowing>();
+				if(p != null)
+				{
+					DestroyImmediate(p);
+					p = null;
+					
+					p = selectedObject.first.GetComponent<PathFollowing>();
+					DestroyImmediate(p);
 				}
-            }
-
+				
+				selectedObject.first.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, true);
+				selectedObject.second.AddComponent<PathFollowing>().initDrawing(touchManager.ActiveTouches[touchManager.ActiveTouches.Count-1].Id, false);
+			}
 		}
 		else if(s.name.Equals(replaceBtn.name))
 		{
-			//print("Replacing object");
 			ReplaceObject();
 		}
 		else if(s.name.Equals(removeBtn.name))
 		{
-			//print("Removing object");
 			RemoveObject();
 		}
 		else if(s.name.Equals(sliderTab.name))
@@ -654,8 +517,8 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(resetBtn.name))
 		{
-			//print("Resetting game");
-			grid.Revert();
+			RemoveObject();
+			levelManager.revert();
 		}
 		else if(s.name.Equals(exitBtn.name))
 		{
@@ -664,6 +527,16 @@ public class LevelDesignTIME : MonoBehaviour
 #else
 			Application.Quit();
 #endif
+		}
+		else if(s.name.Equals(cameraBtn.name))
+		{
+			cameraOutline.SetActive(!cameraOutline.activeSelf);
+			cameraPanel.SetActive(!cameraPanel.activeSelf);
+			RemoveObject();
+		}
+		else if(s.name.Equals(horizontalScrollbar.name) || s.name.Equals(verticalScrollbar.name))
+		{
+			RemoveObject();
 		}
 	}
 }
