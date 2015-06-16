@@ -315,17 +315,22 @@ public class LevelDesignTIME : MonoBehaviour
 	public void RemoveObject()
 	{
 		levelManager.removeObject(Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position));
+		removePlacementUI();
+    }
 
+	private void removePlacementUI()
+	{
+		
 		if(activeKey != "")
 		{
 			database[activeKey].first.SetActive(false);
 			database[activeKey].second.SetActive(false);
 		}
-
+		
 		PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(false);
 		lastObjectSelected = null;
 		removed = true;
-    }
+	}
 
     public void ReplaceObject()
     {
@@ -482,7 +487,8 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void buttonPressedHandler(object sender, EventArgs e)
 	{
-		GameObject s = ((Component) sender).gameObject;
+		PressGesture gesture = (PressGesture) sender;
+		GameObject s = gesture.gameObject;
 		if(s.name.Equals(pathBtn.name))
 		{
             // Get GameObject at touch location and add a PathFollowing component to it
@@ -517,7 +523,10 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(resetBtn.name))
 		{
-			RemoveObject();
+			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
+			{
+				removePlacementUI();
+			}
 			levelManager.revert();
 		}
 		else if(s.name.Equals(exitBtn.name))
@@ -532,11 +541,17 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			cameraOutline.SetActive(!cameraOutline.activeSelf);
 			cameraPanel.SetActive(!cameraPanel.activeSelf);
-			RemoveObject();
+			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
+			{
+				removePlacementUI();
+			}
 		}
 		else if(s.name.Equals(horizontalScrollbar.name) || s.name.Equals(verticalScrollbar.name))
 		{
-			RemoveObject();
+			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
+			{
+				removePlacementUI();
+			}
 		}
 	}
 }
