@@ -30,7 +30,11 @@ public class ScrollBarControl : MonoBehaviour
 
 		horizontalScrollbar.GetComponent<PanGesture>().Panned += scrollbarPannedHandler;
 		verticalScrollbar.GetComponent<PanGesture>().Panned += scrollbarPannedHandler;
-
+	}
+	
+	// Update is called once per frame
+	void Update () 
+	{
 		Vector3 pos = bottomCam.transform.position;
 		pos.z = 0;
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - vScrollbarWidth / 2f;
@@ -59,12 +63,8 @@ public class ScrollBarControl : MonoBehaviour
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - exitBtnOffset;
 		pos.y -= bottomCam.orthographicSize - verticalBtnOffset;
 		exitBtn.transform.position = pos;
-	}
-	
-	// Update is called once per frame
-	void Update () 
-	{
-		Vector3 pos = bottomCam.transform.position;
+
+		pos = bottomCam.transform.position;
 		pos.z = 0;
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - camBtnOffset.x;
 		pos.y += bottomCam.orthographicSize - camBtnOffset.y;
