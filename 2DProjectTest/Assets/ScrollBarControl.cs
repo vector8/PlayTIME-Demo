@@ -86,13 +86,13 @@ public class ScrollBarControl : MonoBehaviour
 		{
 			float dx = gesture.ScreenPosition.x - gesture.PreviousScreenPosition.x;
 			dx /= 50f;
-			bottomCam.transform.Translate(-dx, 0, 0);
+			bottomCam.transform.Translate(dx, 0, 0);
 		}
 		else if(s.name.Equals(verticalScrollbar.name))
 		{
 			float dy = gesture.ScreenPosition.y - gesture.PreviousScreenPosition.y;
 			dy /= 50f;
-			bottomCam.transform.Translate(0, -dy, 0);
+			bottomCam.transform.Translate(0, dy, 0);
 		}
 	}
 }
