@@ -48,7 +48,6 @@ public class CameraControl : MonoBehaviour
 
 		targetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		targetBtn.GetComponent<ReleaseGesture>().Released += buttonReleasedHandler;
-		originalTargetBtnPosition = targetBtn.transform.position;
 	}
 	
 	// Update is called once per frame
@@ -165,6 +164,7 @@ public class CameraControl : MonoBehaviour
 			}
 
 			targetBtnTouchID = max;
+			originalTargetBtnPosition = targetBtn.transform.position;
 			return;
 		}
 	}
