@@ -34,15 +34,13 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private bool removed = false;
 	private bool dragging = true;
+	private Pair<GameObject, GameObject> draggingObject = null;
 	//private int lastGridIdx;
 	private string keyToReset = "";
 	private bool shouldResetKey = false;
 
     private bool previewMode = false;
 	
-	private List<GameObject> objects;
-	private List<GameObject> staticObjects;
-
 	private int sliderTouchID = -1;
 	private const float SLIDER_MAX_X = 1.6455f;
 	private const float SLIDER_MIN_X = -1.6455f;
@@ -54,12 +52,16 @@ public class LevelDesignTIME : MonoBehaviour
 	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c"};
 	private int testIndex = -1;
 
+	void Awake()
+	{
+		gameObject.AddComponent<LevelManager>();
+		levelManager = LevelManager.instance;
+	}
+
 	// Use this for initialization
 	void Start () 
     {
 		touchManager = TouchManager.Instance;
-		gameObject.AddComponent<LevelManager>();
-		levelManager = LevelManager.instance;
 		
 		pathBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		replaceBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
@@ -196,7 +198,7 @@ public class LevelDesignTIME : MonoBehaviour
 					if(dragging)
 					{
 						print (Vector2.Distance(touchPosition, dragStartPosition));
-						if(Vector2.Distance(touchPosition, dragStartPosition) > 0.5f)// lastGridIdx != gridIdx)
+						if(Vector2.Distance(touchPosition, dragStartPosition) > 0.5f)
 						{
 							if(activeKey != "")
 							{
@@ -204,41 +206,21 @@ public class LevelDesignTIME : MonoBehaviour
 								database[activeKey].second.SetActive(false);
 							}
 
-							string keyToActivate = "";
-							string objectName = "";
-							Dictionary<string, Pair<GameObject, GameObject>>.KeyCollection keys = database.Keys;
-							objectName = levelManager.getObjectAtPosition(dragStartPosition).second.name;
+							draggingObject = levelManager.getObjectAtPosition(dragStartPosition);
 
-							foreach(KeyValuePair<string, Pair<GameObject, GameObject>> entry in database)
-							{
-								if(objectName == string.Format("{0}(Clone)", entry.Value.second.name))
-								{
-									keyToActivate = entry.Key;
-									break;
-								}
-							}
-
-							if(keyToActivate.Length > 0)
-							{
-								keyToReset = activeKey;
-								activeKey = keyToActivate;
-								database[activeKey].first.SetActive(true);
-								database[activeKey].second.SetActive(true);
-								shouldResetKey = true;
-							}
-							else
-							{
-								print("ERROR: could not find object " + objectName + " in database.");
-							}
-
-							levelManager.removeObject(dragStartPosition);
-							//grid.RemoveObjectAtIndex(lastGridIdx);
-							lastObjectSelected = null;
+							keyToReset = activeKey;
+							activeKey = "";
+							shouldResetKey = true;
 							dragging = false;
 						}
 					}
 
-					if(activeKey != "")
+					if(draggingObject != null)
+					{
+						draggingObject.first.transform.position = new Vector3(touchPosition.x, touchPosition.y + 10, 1.0f);
+						draggingObject.second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
+					}
+					else if(activeKey != "")
 					{
 						database[activeKey].first.transform.position = new Vector3(touchPosition.x, touchPosition.y + 10, 1.0f);
 						database[activeKey].second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
@@ -250,26 +232,27 @@ public class LevelDesignTIME : MonoBehaviour
 		else
 		{
 			PlacementUI.SetActive(false);
+			
 			if(activeKey != "" && database[activeKey].first.activeSelf)
 			{
 				PlaceObject(lastTouchPosition);
 				database[activeKey].first.SetActive(false);
 				database[activeKey].second.SetActive(false);
-
-				if(lastObjectSelected != null)
-				{
-					lastObjectSelected.first.transform.position = lastObjectSelected.second.transform.position + (new Vector3(0f, 10f, 0f));
-
-					PathFollowing p = lastObjectSelected.first.GetComponent<PathFollowing>();
-					if (p != null)
-					{
-						p.setStateToIdle();
-					}
-
-					lastObjectSelected = null;
-				}
 			}
 
+			if(lastObjectSelected != null)
+			{
+				lastObjectSelected.first.transform.position = lastObjectSelected.second.transform.position + (new Vector3(0f, 10f, 0f));
+
+				PathFollowing p = lastObjectSelected.first.GetComponent<PathFollowing>();
+				if (p != null)
+				{
+					p.setStateToIdle();
+				}
+
+				lastObjectSelected = null;
+			}
+			
 			if(shouldResetKey)
 			{
 				activeKey = keyToReset;
@@ -277,6 +260,7 @@ public class LevelDesignTIME : MonoBehaviour
 				shouldResetKey = false;
 			}
 
+			draggingObject = null;
 			removed = false;
 			dragging = false;
 		}
@@ -397,8 +381,8 @@ public class LevelDesignTIME : MonoBehaviour
 				string[] vals = results[i].Split(delim, StringSplitOptions.None);
 				p.first.name = vals[0];
 				p.second.name = vals[0];
-				addComponentByName(p.first, vals[1], false, vals[2], vals[3]);
-				addComponentByName(p.second, vals[1], true, vals[2], vals[3]);
+				addComponentByName(p.first, vals[1], false, vals[2], vals[3], vals[4], vals[5]);
+				addComponentByName(p.second, vals[1], true, vals[2], vals[3], vals[4], vals[5]);
 			}
 
 			p.first.SetActive(false);
@@ -409,7 +393,7 @@ public class LevelDesignTIME : MonoBehaviour
 		pendingKey = "";
 	}
 
-	private void addComponentByName(GameObject go, string name, bool isStatic, string data1, string data2)
+	private void addComponentByName(GameObject go, string name, bool isStatic, string data1, string data2, string data3, string data4)
 	{
 		go.layer = LayerMask.NameToLayer("BlockingLayer");
 		switch(name)
@@ -477,6 +461,17 @@ public class LevelDesignTIME : MonoBehaviour
 			if(!isStatic)
 			{
 				go.AddComponent(Type.GetType(data1));
+			}
+			break;
+		case "MoveComponent":
+			if(!isStatic)
+			{
+				go.AddComponent<MoveComponent>();
+				MoveComponent mc = go.GetComponent<MoveComponent>();
+				mc.maxSpeed[0] = float.Parse(data1);
+				mc.maxSpeed[1] = float.Parse(data2);
+				mc.maxSpeed[2] = float.Parse(data3);
+				mc.maxSpeed[3] = float.Parse(data4);
 			}
 			break;
 		default:
