@@ -5,8 +5,13 @@ public class LevelManager : MonoBehaviour
 {
 	public static LevelManager instance {get; private set;}
 
+	public const float SCREEN_GAP = 10000f;
+
 	private List<GameObject> placedObjects = new List<GameObject>();
 	private List<GameObject> staticPlacedObjects = new List<GameObject>();
+
+	private List<GameObject> backgroundPlacedObjects = new List<GameObject>();
+	private List<GameObject> staticBackgroundPlacedObjects = new List<GameObject>();
 
 	void Awake()
 	{
@@ -16,7 +21,7 @@ public class LevelManager : MonoBehaviour
 	public void placeObject(Vector2 position, GameObject toSpawn, GameObject staticToSpawn, Transform parent)
 	{
 		GameObject g = GameObject.Instantiate(toSpawn);
-		g.transform.position = (new Vector2(0f, 10f)) + position;
+		g.transform.position = (new Vector2(0f, LevelManager.SCREEN_GAP)) + position;
 		g.transform.parent = parent;
 		GameObject sg = GameObject.Instantiate(staticToSpawn);
 		sg.transform.position = position;
@@ -44,10 +49,8 @@ public class LevelManager : MonoBehaviour
 	public void replaceObject(Vector2 position, GameObject toReplace, GameObject staticToReplace, Transform parent)
 	{
 		GameObject g = GameObject.Instantiate(toReplace);
-		//g.transform.position = (new Vector2(0f, 10f)) + GetPositionFromIndex(idx);
 		g.transform.parent = parent;
 		GameObject sg = GameObject.Instantiate(staticToReplace);
-		//sg.transform.position = GetPositionFromIndex(idx);
 		sg.transform.parent = parent;
 
 		for(int i = 0; i < staticPlacedObjects.Count; i++)
@@ -73,7 +76,7 @@ public class LevelManager : MonoBehaviour
 	{
 		for (int i = 0; i < placedObjects.Count; i++)
 		{
-			placedObjects[i].transform.position = staticPlacedObjects[i].transform.position + (new Vector3(0f, 10f, 0f));
+			placedObjects[i].transform.position = staticPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
 			PathFollowing p = placedObjects[i].GetComponent<PathFollowing>();
 			if(p != null)
 			{
