@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class MoveComponent : MonoBehaviour 
+public class Move : MonoBehaviour 
 {	
 	public const int UP = 0, RIGHT = 1, DOWN = 2, LEFT = 3;
 	public float[] maxSpeed = {4f, 4f, 4f, 4f};

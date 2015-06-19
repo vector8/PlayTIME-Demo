@@ -96,7 +96,7 @@ public class CameraControl : MonoBehaviour
 
 		// Set the outline to the camera's position and size
 		Vector3 outlinePos = camPos;
-		outlinePos.y -= 10;
+		outlinePos.y -= LevelManager.SCREEN_GAP;
 		outlinePos.z = 0;
 		cameraOutline.transform.position = outlinePos;
 		Vector3 scale = new Vector3();

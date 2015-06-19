@@ -110,11 +110,12 @@ public class LevelDesignTIME : MonoBehaviour
 			{
    				PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(true);
 
-				if(p.currentState == PathFollowing.PathState.Playing)
+				if(!p.isEmpty())
 				{
 					sliderGroup.SetActive(true);
 				}
-				else if(p.currentState == PathFollowing.PathState.Idle)
+
+				if(p.currentState == PathFollowing.PathState.Idle)
 				{
 					p.setStateToPlaying();
 					lastObjectSelected = selectedObject;
@@ -198,7 +199,7 @@ public class LevelDesignTIME : MonoBehaviour
 					if(dragging)
 					{
 						print (Vector2.Distance(touchPosition, dragStartPosition));
-						if(Vector2.Distance(touchPosition, dragStartPosition) > 0.5f)
+						if(Vector2.Distance(touchPosition, dragStartPosition) > 0.1f)
 						{
 							if(activeKey != "")
 							{
@@ -217,12 +218,12 @@ public class LevelDesignTIME : MonoBehaviour
 
 					if(draggingObject != null)
 					{
-						draggingObject.first.transform.position = new Vector3(touchPosition.x, touchPosition.y + 10, 1.0f);
+						draggingObject.first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
 						draggingObject.second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
 					}
 					else if(activeKey != "")
 					{
-						database[activeKey].first.transform.position = new Vector3(touchPosition.x, touchPosition.y + 10, 1.0f);
+						database[activeKey].first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
 						database[activeKey].second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
 					}
 					UpdatePlacementUI(touchPosition);
@@ -242,7 +243,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 			if(lastObjectSelected != null)
 			{
-				lastObjectSelected.first.transform.position = lastObjectSelected.second.transform.position + (new Vector3(0f, 10f, 0f));
+				lastObjectSelected.first.transform.position = lastObjectSelected.second.transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
 
 				PathFollowing p = lastObjectSelected.first.GetComponent<PathFollowing>();
 				if (p != null)
@@ -402,8 +403,8 @@ public class LevelDesignTIME : MonoBehaviour
 			go.AddComponent<PathFollowing>().initDrawing(0, !isStatic).setStateToIdle();
 			break;
 		case "SpriteRenderer":
-			go.AddComponent<SpriteRenderer>();
-			SpriteRenderer r = go.GetComponent<SpriteRenderer>();
+		{
+			SpriteRenderer r = go.AddComponent<SpriteRenderer>();
 			if(data1.Length > 0)
 			{
 				int index = data1.LastIndexOf('_');
@@ -429,27 +430,30 @@ public class LevelDesignTIME : MonoBehaviour
 			{
 				r.sortingLayerName = data2;
 			}
+		}
 			break;
 		case "Animator":
 			go.AddComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(data1);
 			break;
 		case "BoxCollider2D":
-			go.AddComponent<BoxCollider2D>();
-			BoxCollider2D bc = go.GetComponent<BoxCollider2D>();
+		{
+			BoxCollider2D bc = go.AddComponent<BoxCollider2D>();
 			bool trigger;
 			if(Boolean.TryParse(data1, out trigger))
 			{
 				bc.isTrigger = trigger;
 			}
+		}
 			break;
 		case "RigidBody2D":
-			go.AddComponent<Rigidbody2D>();
-			Rigidbody2D rb = go.GetComponent<Rigidbody2D>();
+		{
+			Rigidbody2D rb = go.AddComponent<Rigidbody2D>();
 			bool kinematic;
 			if(Boolean.TryParse(data1, out kinematic))
 			{
 				rb.isKinematic = kinematic;
 			}
+		}
 			break;
 		case "Tag":
 			if(!isStatic)
@@ -463,15 +467,31 @@ public class LevelDesignTIME : MonoBehaviour
 				go.AddComponent(Type.GetType(data1));
 			}
 			break;
-		case "MoveComponent":
+		case "Move":
 			if(!isStatic)
 			{
-				go.AddComponent<MoveComponent>();
-				MoveComponent mc = go.GetComponent<MoveComponent>();
+				Move mc = go.AddComponent<Move>();
 				mc.maxSpeed[0] = float.Parse(data1);
 				mc.maxSpeed[1] = float.Parse(data2);
 				mc.maxSpeed[2] = float.Parse(data3);
 				mc.maxSpeed[3] = float.Parse(data4);
+			}
+			break;
+		case "Jump":
+			if(!isStatic)
+			{
+				go.AddComponent<Jump>();
+
+				Rigidbody2D rb = null;
+				rb = go.GetComponent<Rigidbody2D>();
+
+				if(rb == null)
+				{
+					rb = go.AddComponent<Rigidbody2D>();
+				}
+
+				rb.isKinematic = false;
+				rb.fixedAngle = true;
 			}
 			break;
 		default:

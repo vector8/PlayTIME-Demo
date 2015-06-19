@@ -237,4 +237,9 @@ public class PathFollowing : MonoBehaviour
 		
 		return this;
     }
+
+	public bool isEmpty()
+	{
+		return pathPoints.Count == 0;
+	}
 }
