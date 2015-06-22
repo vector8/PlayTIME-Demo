@@ -49,7 +49,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private string pendingKey = "";
 
-	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c"};
+	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", "4d004aef92", "4d004ab4ed"};
 	private int testIndex = -1;
 
 	void Awake()
@@ -85,8 +85,11 @@ public class LevelDesignTIME : MonoBehaviour
 			PlacementUI.transform.position = new Vector3(touchPosition.x, touchPosition.y, -1.0f);
         }
 
+		bool foregroundObjectPresent = levelManager.isObjectAtPosition(touchPosition), 
+		backgroundObjectPresent = levelManager.isBackgroundObjectAtPosition(touchPosition);
+
         // Display correct menu
-		if(!levelManager.isObjectAtPosition(touchPosition))
+		if(!backgroundObjectPresent && !foregroundObjectPresent)
         {
             PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(false);
             PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(false);
@@ -95,10 +98,22 @@ public class LevelDesignTIME : MonoBehaviour
         {
             PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(true);
             PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(false);
-			PlacementUI.transform.Find("ReplaceRemove/ReplaceBtn").gameObject.SetActive(activeKey != "");
+			bool showReplaceButton = activeKey != "" && 
+				(database[activeKey].first.tag != "Background" && foregroundObjectPresent ||
+				 database[activeKey].first.tag == "Background" && backgroundObjectPresent);
+			PlacementUI.transform.Find("ReplaceRemove/ReplaceBtn").gameObject.SetActive(showReplaceButton);
 			sliderGroup.SetActive(false);
 			
-			Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+			Pair<GameObject, GameObject> selectedObject;
+			if(foregroundObjectPresent)
+			{
+				selectedObject = levelManager.getObjectAtPosition(touchPosition);
+			}
+			else
+			{
+				selectedObject = levelManager.getBackgroundObjectAtPosition(touchPosition);
+			}
+
 			PathFollowing p = selectedObject.second.GetComponent<PathFollowing>();
             if (p != null)
             {
@@ -188,7 +203,20 @@ public class LevelDesignTIME : MonoBehaviour
 						database[activeKey].second.SetActive(true);
 					}
 
-					if(levelManager.isObjectAtPosition(touchPosition))
+					if(activeKey != "" && database[activeKey].first.tag == "Background")
+					{
+						if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
+						{
+							PlaceObject(touchPosition, true);
+						}
+						else
+						{
+							RemoveObject(true);
+						}
+						dragging = true;
+						dragStartPosition = touchPosition;
+					}
+					else if(levelManager.isObjectAtPosition(touchPosition))
 					{
 						dragging = true;
 						dragStartPosition = touchPosition;
@@ -198,21 +226,43 @@ public class LevelDesignTIME : MonoBehaviour
 				{
 					if(dragging)
 					{
-						print (Vector2.Distance(touchPosition, dragStartPosition));
+						//print (Vector2.Distance(touchPosition, dragStartPosition));
 						if(Vector2.Distance(touchPosition, dragStartPosition) > 0.1f)
 						{
-							if(activeKey != "")
+							if(activeKey != "" && database[activeKey].first.tag == "Background")
 							{
-								database[activeKey].first.SetActive(false);
-								database[activeKey].second.SetActive(false);
+								if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
+								{
+									PlaceObject(touchPosition, true);
+								}
+								else
+								{
+									RemoveObject(true);
+								}
+								dragStartPosition = touchPosition;
 							}
+							else
+							{
+								if(activeKey != "")
+								{
+									database[activeKey].first.SetActive(false);
+									database[activeKey].second.SetActive(false);
+								}
 
-							draggingObject = levelManager.getObjectAtPosition(dragStartPosition);
+								if(levelManager.isObjectAtPosition(dragStartPosition))
+								{
+									draggingObject = levelManager.getObjectAtPosition(dragStartPosition);
+								}
+								else
+								{
+									draggingObject = levelManager.getBackgroundObjectAtPosition(dragStartPosition);
+								}
 
-							keyToReset = activeKey;
-							activeKey = "";
-							shouldResetKey = true;
-							dragging = false;
+								keyToReset = activeKey;
+								activeKey = "";
+								shouldResetKey = true;
+								dragging = false;
+							}
 						}
 					}
 
@@ -234,7 +284,8 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			PlacementUI.SetActive(false);
 			
-			if(activeKey != "" && database[activeKey].first.activeSelf)
+			if(activeKey != "" && database[activeKey].first.activeSelf && 
+			   (database[activeKey].first.tag != "Background" || database[activeKey].first.tag == "Background" && database[activeKey].first.GetComponent<SpriteRenderer>() != null))
 			{
 				PlaceObject(lastTouchPosition);
 				database[activeKey].first.SetActive(false);
@@ -283,10 +334,12 @@ public class LevelDesignTIME : MonoBehaviour
         }
 	}
 
-	public void PlaceObject(Vector2 position)
+	public void PlaceObject(Vector2 position, bool ignoreExisting = false)
 	{
 		// Check if spot is free
-		if (!levelManager.isObjectAtPosition(position))
+		if ((database[activeKey].first.tag == "Background" && !levelManager.isBackgroundObjectAtPosition(position)) || 
+		    (database[activeKey].first.tag != "Background" && !levelManager.isObjectAtPosition(position)) || 
+		    ignoreExisting)
 		{
 			levelManager.placeObject(position, database[activeKey].first, database[activeKey].second, this.transform);
 		}
@@ -297,10 +350,13 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 	}
 	
-	public void RemoveObject()
+	public void RemoveObject(bool backgroundOnly)
 	{
-		levelManager.removeObject(Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position));
-		removePlacementUI();
+		levelManager.removeObject(Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position), backgroundOnly);
+		if(!backgroundOnly)
+		{
+			removePlacementUI();
+		}
     }
 
 	private void removePlacementUI()
@@ -456,7 +512,7 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 			break;
 		case "Tag":
-			if(!isStatic)
+			if(data1 == "Background" || !isStatic)
 			{
 				go.tag = data1;
 			}
@@ -530,7 +586,7 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(removeBtn.name))
 		{
-			RemoveObject();
+			RemoveObject(false);
 		}
 		else if(s.name.Equals(sliderTab.name))
 		{

@@ -27,21 +27,43 @@ public class LevelManager : MonoBehaviour
 		sg.transform.position = position;
 		sg.transform.parent = parent;
 		// Store placed object
-		placedObjects.Add(g);
-		staticPlacedObjects.Add(sg);
+		if(g.tag == "Background")
+		{
+			backgroundPlacedObjects.Add(g);
+			staticBackgroundPlacedObjects.Add(sg);
+		}
+		else
+		{
+			placedObjects.Add(g);
+			staticPlacedObjects.Add(sg);
+		}
 	}
 
-	public void removeObject(Vector2 position)
+	public void removeObject(Vector2 position, bool backgroundOnly)
 	{
-		for(int i = 0; i < staticPlacedObjects.Count; i++)
+		if(!backgroundOnly)
 		{
-			if(staticPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+			for(int i = 0; i < staticPlacedObjects.Count; i++)
 			{
-				DestroyImmediate(placedObjects[i]);
-				placedObjects.RemoveAt(i);
-				DestroyImmediate(staticPlacedObjects[i]);
-				staticPlacedObjects.RemoveAt(i);
-				return;
+				if(staticPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+				{
+					DestroyImmediate(placedObjects[i]);
+					placedObjects.RemoveAt(i);
+					DestroyImmediate(staticPlacedObjects[i]);
+					staticPlacedObjects.RemoveAt(i);
+					return;
+				}
+			}
+		}
+			
+		for(int i = 0; i < staticBackgroundPlacedObjects.Count; i++)
+		{
+			if(staticBackgroundPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+			{
+				DestroyImmediate(backgroundPlacedObjects[i]);
+				backgroundPlacedObjects.RemoveAt(i);
+				DestroyImmediate(staticBackgroundPlacedObjects[i]);
+				staticBackgroundPlacedObjects.RemoveAt(i);
 			}
 		}
 	}
@@ -53,21 +75,44 @@ public class LevelManager : MonoBehaviour
 		GameObject sg = GameObject.Instantiate(staticToReplace);
 		sg.transform.parent = parent;
 
-		for(int i = 0; i < staticPlacedObjects.Count; i++)
+		if(g.tag == "Background")
 		{
-			if(staticPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+			for(int i = 0; i < staticBackgroundPlacedObjects.Count; i++)
 			{
-				g.transform.position = placedObjects[i].transform.position;
-				sg.transform.position = staticPlacedObjects[i].transform.position;
+				if(staticBackgroundPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+				{
+					g.transform.position = backgroundPlacedObjects[i].transform.position;
+					sg.transform.position = staticBackgroundPlacedObjects[i].transform.position;
+					
+					DestroyImmediate(backgroundPlacedObjects[i]);
+					backgroundPlacedObjects.RemoveAt(i);
+					DestroyImmediate(staticBackgroundPlacedObjects[i]);
+					staticBackgroundPlacedObjects.RemoveAt(i);
+					
+					backgroundPlacedObjects.Add(g);
+					staticBackgroundPlacedObjects.Add(sg);
+					return;
+				}
+			}
+		}
+		else
+		{
+			for(int i = 0; i < staticPlacedObjects.Count; i++)
+			{
+				if(staticPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+				{
+					g.transform.position = placedObjects[i].transform.position;
+					sg.transform.position = staticPlacedObjects[i].transform.position;
 
-				DestroyImmediate(placedObjects[i]);
-				placedObjects.RemoveAt(i);
-				DestroyImmediate(staticPlacedObjects[i]);
-				staticPlacedObjects.RemoveAt(i);
+					DestroyImmediate(placedObjects[i]);
+					placedObjects.RemoveAt(i);
+					DestroyImmediate(staticPlacedObjects[i]);
+					staticPlacedObjects.RemoveAt(i);
 
-				placedObjects.Add(g);
-				staticPlacedObjects.Add(sg);
-				return;
+					placedObjects.Add(g);
+					staticPlacedObjects.Add(sg);
+					return;
+				}
 			}
 		}
 	}
@@ -78,6 +123,16 @@ public class LevelManager : MonoBehaviour
 		{
 			placedObjects[i].transform.position = staticPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
 			PathFollowing p = placedObjects[i].GetComponent<PathFollowing>();
+			if(p != null)
+			{
+				p.setStateToIdle();
+			}
+		}
+
+		for (int i = 0; i < backgroundPlacedObjects.Count; i++)
+		{
+			backgroundPlacedObjects[i].transform.position = staticBackgroundPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
+			PathFollowing p = backgroundPlacedObjects[i].GetComponent<PathFollowing>();
 			if(p != null)
 			{
 				p.setStateToIdle();
@@ -98,6 +153,19 @@ public class LevelManager : MonoBehaviour
 		return false;
 	}
 
+	public bool isBackgroundObjectAtPosition(Vector2 position)
+	{
+		for(int i = 0; i < staticBackgroundPlacedObjects.Count; i++)
+		{
+			if(staticBackgroundPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
 	public Pair<GameObject, GameObject> getObjectAtPosition(Vector2 position)
 	{
 		for(int i = 0; i < staticPlacedObjects.Count; i++)
@@ -105,6 +173,19 @@ public class LevelManager : MonoBehaviour
 			if(staticPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
 			{
 				return new Pair<GameObject,GameObject>(placedObjects[i], staticPlacedObjects[i]);
+			}
+		}
+		
+		return null;
+	}
+	
+	public Pair<GameObject, GameObject> getBackgroundObjectAtPosition(Vector2 position)
+	{
+		for(int i = 0; i < staticBackgroundPlacedObjects.Count; i++)
+		{
+			if(staticBackgroundPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
+			{
+				return new Pair<GameObject,GameObject>(backgroundPlacedObjects[i], staticBackgroundPlacedObjects[i]);
 			}
 		}
 		
