@@ -284,10 +284,13 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			PlacementUI.SetActive(false);
 			
-			if(activeKey != "" && database[activeKey].first.activeSelf && 
-			   (database[activeKey].first.tag != "Background" || database[activeKey].first.tag == "Background" && database[activeKey].first.GetComponent<SpriteRenderer>() != null))
+			if(activeKey != "" && database[activeKey].first.activeSelf) 
 			{
-				PlaceObject(lastTouchPosition);
+				if((database[activeKey].first.tag != "Background" || database[activeKey].first.tag == "Background" && database[activeKey].first.GetComponent<SpriteRenderer>() != null))
+				{
+					PlaceObject(lastTouchPosition);
+				}
+
 				database[activeKey].first.SetActive(false);
 				database[activeKey].second.SetActive(false);
 			}
