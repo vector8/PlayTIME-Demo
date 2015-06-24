@@ -505,12 +505,17 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 			break;
 		case "RigidBody2D":
+		if(!isStatic)
 		{
 			Rigidbody2D rb = go.AddComponent<Rigidbody2D>();
-			bool kinematic;
+			bool kinematic, fixedAngle;
 			if(Boolean.TryParse(data1, out kinematic))
 			{
 				rb.isKinematic = kinematic;
+			}
+			if(Boolean.TryParse(data2, out fixedAngle))
+			{
+				rb.fixedAngle = fixedAngle;
 			}
 		}
 			break;
@@ -551,6 +556,39 @@ public class LevelDesignTIME : MonoBehaviour
 
 				rb.isKinematic = false;
 				rb.fixedAngle = true;
+			}
+			break;
+		case "Health":
+			if(!isStatic)
+			{
+				BoxCollider2D c = null;
+				c = go.GetComponent<BoxCollider2D>();
+
+				if(c == null)
+				{
+					c = go.AddComponent<BoxCollider2D>();
+				}
+
+				Health h = go.AddComponent<Health>();
+				Int32.TryParse(data1, out h.maxHP);
+				h.enemyTag = data2;
+				Int32.TryParse(data3, out h.directions);
+			}
+			break;
+		case "Damage":
+			if(!isStatic)
+			{
+				BoxCollider2D c = null;
+				c = go.GetComponent<BoxCollider2D>();
+				
+				if(c == null)
+				{
+					c = go.AddComponent<BoxCollider2D>();
+				}
+				
+				Damage d = go.AddComponent<Damage>();
+				Int32.TryParse(data1, out d.dmg);
+				Int32.TryParse(data2, out d.directions);
 			}
 			break;
 		default:

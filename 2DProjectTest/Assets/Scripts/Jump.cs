@@ -7,6 +7,8 @@ public class Jump : MonoBehaviour
 
 	private bool jumped = false;
 	private bool canJump = true;
+	private float jumpTimer = 0;
+	private const float JUMP_COOLDOWN = 0.5f;
 	
 	// Use this for initialization
 	void Start () 
@@ -15,10 +17,16 @@ public class Jump : MonoBehaviour
 
 	void Update()
 	{
+		if(jumpTimer > 0)
+		{
+			jumpTimer -= Time.deltaTime;
+		}
+			
 		if(Input.GetButton("Jump") && canJump)
 		{
 			jumped = true;
 			canJump = false;
+			jumpTimer = JUMP_COOLDOWN;
 		}
 	}
 	
@@ -33,19 +41,22 @@ public class Jump : MonoBehaviour
 		}
 	}
 
-	void OnCollisionEnter2D(Collision2D collision)
+	void OnCollisionStay2D(Collision2D collision)
 	{
-		Vector2 right = new Vector2(1f, 0f);
-
-		for(int i = 0; i < collision.contacts.Length; i++)
+		if(!canJump && jumpTimer <= 0)
 		{
-			Vector2 contactDir = collision.contacts[i].point - (Vector2)gameObject.transform.position;
-			float angle = Vector2.Angle(right, contactDir);
-			if(contactDir.y < 0 && angle > 50f && angle < 130f)
+			Vector2 right = new Vector2(1f, 0f);
+
+			for(int i = 0; i < collision.contacts.Length; i++)
 			{
-				canJump = true;
-				print ("Jump reset");
-				return;
+				Vector2 contactDir = (Vector2)collision.gameObject.transform.position - (Vector2)gameObject.transform.position;
+				float angle = Vector2.Angle(right, contactDir);
+				if(contactDir.y < 0 && angle >= 45f && angle <= 135f)
+				{
+					canJump = true;
+					print ("Jump reset");
+					return;
+				}
 			}
 		}
 	}
