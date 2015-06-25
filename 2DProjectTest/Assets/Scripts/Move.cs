@@ -48,4 +48,15 @@ public class Move : MonoBehaviour
 		pos.y -= currentSpeed[DOWN] * Time.deltaTime;
 		gameObject.transform.position = pos;
 	}
+
+	public void setMaxSpeed(float speed)
+	{
+		for(int i = 0; i < 4; i++)
+		{
+			if(!Mathf.Approximately(maxSpeed[i], 0))
+			{
+				maxSpeed[i] = speed;
+			}
+		}
+	}
 }

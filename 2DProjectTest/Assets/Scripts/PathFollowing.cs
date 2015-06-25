@@ -165,7 +165,7 @@ public class PathFollowing : MonoBehaviour
         if (!movableObject)
             pathPoints.Add(mouseWorldSpace);
         else
-            pathPoints.Add((new Vector3(0f, 10f, 0f)) + mouseWorldSpace); 
+			pathPoints.Add((new Vector3(0f, LevelManager.SCREEN_GAP, 0f)) + mouseWorldSpace); 
 
         if (!movableObject)
             UpdatePathRenderer();
