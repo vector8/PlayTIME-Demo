@@ -19,8 +19,9 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject PlacementUI;
     public Vector2 PlacementUIOffsetInPixels;
 
-	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, sliderGroup, sliderTab, cameraBtn, cameraPanel, cameraOutline;
-	public GameObject horizontalScrollbar, verticalScrollbar;
+	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn;
+	public GameObject pathSliderGroup, pathSliderTab, jumpSliderGroup, jumpSliderTab, moveSliderGroup, moveSliderTab;
+	public GameObject cameraBtn, cameraPanel, cameraOutline, horizontalScrollbar, verticalScrollbar;
 	
 	// Current or latest rfid tag read.
 	// Empty string means none active
@@ -41,7 +42,7 @@ public class LevelDesignTIME : MonoBehaviour
 
     private bool previewMode = false;
 	
-	private int sliderTouchID = -1;
+	private int pathSliderTouchID = -1, jumpSliderTouchID = -1, moveSliderTouchID = -1;
 	private const float SLIDER_MAX_X = 1.6455f;
 	private const float SLIDER_MIN_X = -1.6455f;
 
@@ -68,7 +69,9 @@ public class LevelDesignTIME : MonoBehaviour
 		removeBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		resetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		exitBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
-		sliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		pathSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		jumpSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		moveSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		cameraBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		horizontalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		verticalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
@@ -102,7 +105,9 @@ public class LevelDesignTIME : MonoBehaviour
 				(database[activeKey].first.tag != "Background" && foregroundObjectPresent ||
 				 database[activeKey].first.tag == "Background" && backgroundObjectPresent);
 			PlacementUI.transform.Find("ReplaceRemove/ReplaceBtn").gameObject.SetActive(showReplaceButton);
-			sliderGroup.SetActive(false);
+			pathSliderGroup.SetActive(false);
+			jumpSliderGroup.SetActive(false);
+			moveSliderGroup.SetActive(false);
 			
 			Pair<GameObject, GameObject> selectedObject;
 			if(foregroundObjectPresent)
@@ -127,7 +132,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 				if(!p.isEmpty())
 				{
-					sliderGroup.SetActive(true);
+					pathSliderGroup.SetActive(true);
 				}
 
 				if(p.currentState == PathFollowing.PathState.Idle)
@@ -137,7 +142,36 @@ public class LevelDesignTIME : MonoBehaviour
 
 					// Set slider tab to correct position
 					float xpos = ((1f - (p.pathPlaybackTimeInSeconds - 1f) / 8f) * 5.6f) - 2.8f;
-					sliderTab.transform.localPosition = new Vector3(xpos, sliderTab.transform.localPosition.y, 0f);
+					pathSliderTab.transform.localPosition = new Vector3(xpos, pathSliderTab.transform.localPosition.y, 0f);
+				}
+			}
+
+			Jump j = selectedObject.first.GetComponent<Jump>();
+			if(j != null)
+			{
+				jumpSliderGroup.SetActive(true);
+				float xpos = (((j.burst - 2f) / 8f) * 5.6f) - 2.8f;
+				jumpSliderTab.transform.localPosition = new Vector3(xpos, jumpSliderTab.transform.localPosition.y, 0f);
+			}
+			
+			Move m = selectedObject.first.GetComponent<Move>();
+			if(m != null)
+			{
+				moveSliderGroup.SetActive(true);
+				float speed = 0f;
+				for(int i = 0; i < 4; i++)
+				{
+					if(!Mathf.Approximately(m.maxSpeed[i], 0f))
+					{
+						speed = m.maxSpeed[i];
+						break;
+					}
+				}
+
+				if(!Mathf.Approximately(speed, 0f))
+				{
+					float xpos = (((speed - 2f) / 8f) * 5.6f) - 2.8f;
+					moveSliderTab.transform.localPosition = new Vector3(xpos, moveSliderTab.transform.localPosition.y, 0f);
 				}
 			}
         }
@@ -153,22 +187,22 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position);
 
-			if(sliderTouchID > -1)
+			if(pathSliderTouchID > -1)
 			{
 				bool found = false;
 
 				for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
 				{
-					if(touchManager.ActiveTouches[i].Id == sliderTouchID)
+					if(touchManager.ActiveTouches[i].Id == pathSliderTouchID)
 					{
 						found = true;
 
 						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
-						xpos = Mathf.Max(Mathf.Min(xpos, sliderGroup.transform.position.x + SLIDER_MAX_X), sliderGroup.transform.position.x + SLIDER_MIN_X);
+						xpos = Mathf.Max(Mathf.Min(xpos, pathSliderGroup.transform.position.x + SLIDER_MAX_X), pathSliderGroup.transform.position.x + SLIDER_MIN_X);
 
-						sliderTab.transform.position = new Vector3(xpos, sliderTab.transform.position.y, 0f);
+						pathSliderTab.transform.position = new Vector3(xpos, pathSliderTab.transform.position.y, 0f);
 
-						float newPlaybackTimeSec = (1 - (sliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 1f;
+						float newPlaybackTimeSec = (1 - (pathSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 1f;
 						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
 						if(selectedObject != null)
 						{
@@ -186,7 +220,79 @@ public class LevelDesignTIME : MonoBehaviour
 				
 				if(!found)
 				{
-					sliderTouchID = -1;
+					pathSliderTouchID = -1;
+				}
+			}
+
+			if(jumpSliderTouchID > -1)
+			{
+				bool found = false;
+				
+				for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+				{
+					if(touchManager.ActiveTouches[i].Id == jumpSliderTouchID)
+					{
+						found = true;
+						
+						float ypos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).y;
+						ypos = Mathf.Max(Mathf.Min(ypos, jumpSliderGroup.transform.position.y + SLIDER_MAX_X), jumpSliderGroup.transform.position.y + SLIDER_MIN_X);
+						
+						jumpSliderTab.transform.position = new Vector3(jumpSliderTab.transform.position.x, ypos, 0f);
+						
+						float newJumpBurst = ((jumpSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
+						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+						if(selectedObject != null)
+						{
+							Jump j = selectedObject.first.GetComponent<Jump>();
+							if (j != null)
+							{
+								j.burst = newJumpBurst;
+							}
+						}
+						
+						break;
+					}
+				}
+				
+				if(!found)
+				{
+					jumpSliderTouchID = -1;
+				}
+			}
+
+			if(moveSliderTouchID > -1)
+			{
+				bool found = false;
+				
+				for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+				{
+					if(touchManager.ActiveTouches[i].Id == moveSliderTouchID)
+					{
+						found = true;
+						
+						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
+						xpos = Mathf.Max(Mathf.Min(xpos, moveSliderGroup.transform.position.x + SLIDER_MAX_X), moveSliderGroup.transform.position.x + SLIDER_MIN_X);
+						
+						moveSliderTab.transform.position = new Vector3(xpos, moveSliderTab.transform.position.y, 0f);
+						
+						float newMoveSpeed = ((moveSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
+						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+						if(selectedObject != null)
+						{
+							Move m = selectedObject.first.GetComponent<Move>();
+							if (m != null)
+							{
+								m.setMaxSpeed(newMoveSpeed);
+							}
+						}
+						
+						break;
+					}
+				}
+				
+				if(!found)
+				{
+					moveSliderTouchID = -1;
 				}
 			}
 
@@ -197,7 +303,7 @@ public class LevelDesignTIME : MonoBehaviour
 				{
 					PlacementUI.SetActive(true);
 
-					if(activeKey != "")
+					if(activeKey != "" && (database[activeKey].first.tag == "Background" || !levelManager.isObjectAtPosition(touchPosition)))
 					{
 						database[activeKey].first.SetActive(true);
 						database[activeKey].second.SetActive(true);
@@ -629,9 +735,17 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			RemoveObject(false);
 		}
-		else if(s.name.Equals(sliderTab.name))
+		else if(s.name.Equals(pathSliderTab.name))
 		{
-			sliderTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
+			pathSliderTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
+		}
+		else if(s.name.Equals(jumpSliderTab.name))
+		{
+			jumpSliderTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
+		}
+		else if(s.name.Equals(moveSliderTab.name))
+		{
+			moveSliderTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
 		}
 		else if(s.name.Equals(resetBtn.name))
 		{
