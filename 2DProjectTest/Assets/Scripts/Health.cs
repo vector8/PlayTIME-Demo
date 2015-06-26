@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
+using System.Linq;
 
 public class Health : MonoBehaviour 
 {
@@ -7,6 +9,14 @@ public class Health : MonoBehaviour
 	public string enemyTag;
 	public int directions;
 
+	public enum DeathActions
+	{
+		Despawn = 0,
+		Respawn = 1,
+		GameOver = 2,
+		Trigger = 3
+	}
+		
 	private enum DamageDirections
 	{
 		Top = 1,
@@ -15,11 +25,14 @@ public class Health : MonoBehaviour
 		Left = 8
 	}
 
+	public DeathActions da;
 	private float damageCooldownTimer;
 	private const float DAMAGE_COOLDOWN = 0.5f;
 
 	private float topAngle, sideAngle;
 
+	private static DeathActions maxDA = Enum.GetValues(typeof(DeathActions)).Cast<DeathActions>().Max();
+	
 	// Use this for initialization
 	void Start () 
 	{
@@ -36,7 +49,26 @@ public class Health : MonoBehaviour
 	{
 		if(hp <= 0)
 		{
-
+			switch(da)
+			{
+			case DeathActions.Despawn:
+				// De-activate this object, it will re-activate when the Reset button is pressed.
+				gameObject.SetActive(false);
+				hp = maxHP;
+				break;
+			case DeathActions.Respawn:
+				LevelManager.instance.revertObject(gameObject);
+				hp = maxHP;
+				break;
+			case DeathActions.GameOver:
+				// End the game or something.. prolly thru LevelManager
+				break;
+			case DeathActions.Trigger:
+				// I dunno... might have to make an event system for this?
+				break;
+			default:
+				break;
+			}
 		}
 
 		if(damageCooldownTimer > 0)
@@ -71,5 +103,13 @@ public class Health : MonoBehaviour
 	{
 		bool value = (directions & (int)collisionDirection) == (int)collisionDirection;
 		return value;
+	}
+
+	public void setDeathAction(int actionID)
+	{
+		if(actionID < (int) maxDA)
+		{
+			da = (DeathActions) actionID;
+		}
 	}
 }

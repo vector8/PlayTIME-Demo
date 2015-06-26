@@ -35,6 +35,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private bool removed = false;
 	private bool dragging = true;
+	private bool firstTouch = true;
 	private Pair<GameObject, GameObject> draggingObject = null;
 	//private int lastGridIdx;
 	private string keyToReset = "";
@@ -213,7 +214,6 @@ public class LevelDesignTIME : MonoBehaviour
 								p.currentPathPlayBackTime = 0f;
 							}
 						}
-						
 						break;
 					}
 				}
@@ -249,7 +249,6 @@ public class LevelDesignTIME : MonoBehaviour
 								j.burst = newJumpBurst;
 							}
 						}
-						
 						break;
 					}
 				}
@@ -285,7 +284,6 @@ public class LevelDesignTIME : MonoBehaviour
 								m.setMaxSpeed(newMoveSpeed);
 							}
 						}
-						
 						break;
 					}
 				}
@@ -299,8 +297,9 @@ public class LevelDesignTIME : MonoBehaviour
 			if(!removed)
 			{
 				lastTouchPosition = touchPosition;
-				if(activeKey == "" && !PlacementUI.activeSelf || activeKey != "" && !database[activeKey].first.activeSelf)
+				if(firstTouch)
 				{
+					firstTouch = false;
 					PlacementUI.SetActive(true);
 
 					if(activeKey != "" && (database[activeKey].first.tag == "Background" || !levelManager.isObjectAtPosition(touchPosition)))
@@ -389,6 +388,7 @@ public class LevelDesignTIME : MonoBehaviour
 		else
 		{
 			PlacementUI.SetActive(false);
+			firstTouch = true;
 			
 			if(activeKey != "" && database[activeKey].first.activeSelf) 
 			{
@@ -484,8 +484,13 @@ public class LevelDesignTIME : MonoBehaviour
 
     public void ReplaceObject()
     {
+		bool active = database[activeKey].first.activeSelf;
+		database[activeKey].first.SetActive(true);
+		database[activeKey].second.SetActive(true);
 		levelManager.replaceObject(Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position), database[activeKey].first, database[activeKey].second, this.transform);
 		lastObjectSelected = null;
+		database[activeKey].first.SetActive(active);
+		database[activeKey].second.SetActive(active);
     }
 
     public void rfidFound(string key)
@@ -679,6 +684,12 @@ public class LevelDesignTIME : MonoBehaviour
 				Int32.TryParse(data1, out h.maxHP);
 				h.enemyTag = data2;
 				Int32.TryParse(data3, out h.directions);
+				int deathAction;
+				if(Int32.TryParse(data4, out deathAction))
+				{
+					h.setDeathAction(deathAction);
+				}
+
 			}
 			break;
 		case "Damage":
