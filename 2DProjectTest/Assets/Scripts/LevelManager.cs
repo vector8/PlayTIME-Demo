@@ -68,6 +68,21 @@ public class LevelManager : MonoBehaviour
 		}
 	}
 
+	public void removeObject(GameObject go)
+	{
+		for(int i = 0; i < staticPlacedObjects.Count; i++)
+		{
+			if(placedObjects[i] == go)
+			{
+				DestroyImmediate(placedObjects[i]);
+				placedObjects.RemoveAt(i);
+				DestroyImmediate(staticPlacedObjects[i]);
+				staticPlacedObjects.RemoveAt(i);
+				return;
+			}
+		}
+	}
+
 	public void replaceObject(Vector2 position, GameObject toReplace, GameObject staticToReplace, Transform parent)
 	{
 		GameObject g = GameObject.Instantiate(toReplace);
@@ -121,6 +136,7 @@ public class LevelManager : MonoBehaviour
 	{
 		for (int i = 0; i < placedObjects.Count; i++)
 		{
+			placedObjects[i].SetActive(true);
 			placedObjects[i].transform.position = staticPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
 			PathFollowing p = placedObjects[i].GetComponent<PathFollowing>();
 			if(p != null)
@@ -131,11 +147,24 @@ public class LevelManager : MonoBehaviour
 
 		for (int i = 0; i < backgroundPlacedObjects.Count; i++)
 		{
+			backgroundPlacedObjects[i].SetActive(true);
 			backgroundPlacedObjects[i].transform.position = staticBackgroundPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
 			PathFollowing p = backgroundPlacedObjects[i].GetComponent<PathFollowing>();
 			if(p != null)
 			{
 				p.setStateToIdle();
+			}
+		}
+	}
+
+	public void revertObject(GameObject go)
+	{
+		for(int i = 0; i < placedObjects.Count; i++)
+		{
+			if(placedObjects[i] == go)
+			{
+				placedObjects[i].transform.position = staticPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
+				return;
 			}
 		}
 	}
