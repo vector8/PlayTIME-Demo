@@ -84,12 +84,12 @@ public class Health : MonoBehaviour
 			Damage d = coll.gameObject.GetComponent<Damage>();
 			if(d != null)
 			{
-				Vector3 v = (Vector3)coll.gameObject.transform.position - transform.position;
+				Vector2 v = (Vector2)(coll.gameObject.transform.position - transform.position);
 
-				if (Vector3.Angle(v, transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Top) && directionsInclude(d.directions, DamageDirections.Bottom) ||
-				    Vector3.Angle(v, transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Right) && directionsInclude(d.directions, DamageDirections.Left) ||
-				    Vector3.Angle(v, -transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Bottom) && directionsInclude(d.directions, DamageDirections.Top) ||
-				    Vector3.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Left) && directionsInclude(d.directions, DamageDirections.Right))
+				if (Vector2.Angle(v, transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Top) && directionsInclude(d.directions, DamageDirections.Bottom) ||
+				    Vector2.Angle(v, transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Right) && directionsInclude(d.directions, DamageDirections.Left) ||
+				    Vector2.Angle(v, -transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Bottom) && directionsInclude(d.directions, DamageDirections.Top) ||
+				    Vector2.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Left) && directionsInclude(d.directions, DamageDirections.Right))
 				{
 					hp -= d.dmg; 
 					damageCooldownTimer = DAMAGE_COOLDOWN;
