@@ -1,9 +1,26 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class LevelManager : MonoBehaviour 
+public class LevelManager
 {
-	public static LevelManager instance {get; private set;}
+	private static LevelManager _instance = null;
+
+	public static LevelManager instance 
+	{
+		get
+		{
+			if(_instance == null)
+			{
+				_instance = new LevelManager();
+			}
+
+			return _instance;
+		}
+		set
+		{
+			_instance = value;
+		}
+	}
 
 	public const float SCREEN_GAP = 10000f;
 
@@ -47,9 +64,9 @@ public class LevelManager : MonoBehaviour
 			{
 				if(staticPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
 				{
-					DestroyImmediate(placedObjects[i]);
+					GameObject.DestroyImmediate(placedObjects[i]);
 					placedObjects.RemoveAt(i);
-					DestroyImmediate(staticPlacedObjects[i]);
+					GameObject.DestroyImmediate(staticPlacedObjects[i]);
 					staticPlacedObjects.RemoveAt(i);
 					return;
 				}
@@ -60,9 +77,9 @@ public class LevelManager : MonoBehaviour
 		{
 			if(staticBackgroundPlacedObjects[i].GetComponent<Collider2D>().OverlapPoint(position))
 			{
-				DestroyImmediate(backgroundPlacedObjects[i]);
+				GameObject.DestroyImmediate(backgroundPlacedObjects[i]);
 				backgroundPlacedObjects.RemoveAt(i);
-				DestroyImmediate(staticBackgroundPlacedObjects[i]);
+				GameObject.DestroyImmediate(staticBackgroundPlacedObjects[i]);
 				staticBackgroundPlacedObjects.RemoveAt(i);
 			}
 		}
@@ -74,9 +91,9 @@ public class LevelManager : MonoBehaviour
 		{
 			if(placedObjects[i] == go)
 			{
-				DestroyImmediate(placedObjects[i]);
+				GameObject.DestroyImmediate(placedObjects[i]);
 				placedObjects.RemoveAt(i);
-				DestroyImmediate(staticPlacedObjects[i]);
+				GameObject.DestroyImmediate(staticPlacedObjects[i]);
 				staticPlacedObjects.RemoveAt(i);
 				return;
 			}
@@ -99,9 +116,9 @@ public class LevelManager : MonoBehaviour
 					g.transform.position = backgroundPlacedObjects[i].transform.position;
 					sg.transform.position = staticBackgroundPlacedObjects[i].transform.position;
 					
-					DestroyImmediate(backgroundPlacedObjects[i]);
+					GameObject.DestroyImmediate(backgroundPlacedObjects[i]);
 					backgroundPlacedObjects.RemoveAt(i);
-					DestroyImmediate(staticBackgroundPlacedObjects[i]);
+					GameObject.DestroyImmediate(staticBackgroundPlacedObjects[i]);
 					staticBackgroundPlacedObjects.RemoveAt(i);
 					
 					backgroundPlacedObjects.Add(g);
@@ -119,9 +136,9 @@ public class LevelManager : MonoBehaviour
 					g.transform.position = placedObjects[i].transform.position;
 					sg.transform.position = staticPlacedObjects[i].transform.position;
 
-					DestroyImmediate(placedObjects[i]);
+					GameObject.DestroyImmediate(placedObjects[i]);
 					placedObjects.RemoveAt(i);
-					DestroyImmediate(staticPlacedObjects[i]);
+					GameObject.DestroyImmediate(staticPlacedObjects[i]);
 					staticPlacedObjects.RemoveAt(i);
 
 					placedObjects.Add(g);
