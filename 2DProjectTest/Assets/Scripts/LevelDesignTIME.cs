@@ -19,7 +19,7 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject PlacementUI;
     public Vector2 PlacementUIOffsetInPixels;
 
-	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn;
+	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, saveBtn, loadBtn;
 	public GameObject pathSliderGroup, pathSliderTab, jumpSliderGroup, jumpSliderTab, moveSliderGroup, moveSliderTab;
 	public GameObject cameraBtn, cameraPanel, cameraOutline, horizontalScrollbar, verticalScrollbar;
 	
@@ -56,7 +56,6 @@ public class LevelDesignTIME : MonoBehaviour
 
 	void Awake()
 	{
-		gameObject.AddComponent<LevelManager>();
 		levelManager = LevelManager.instance;
 	}
 
@@ -76,6 +75,8 @@ public class LevelDesignTIME : MonoBehaviour
 		cameraBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		horizontalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		verticalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		saveBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		loadBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 	}
 
     // Description:
@@ -785,6 +786,22 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(horizontalScrollbar.name) || s.name.Equals(verticalScrollbar.name))
 		{
+			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
+			{
+				removePlacementUI();
+			}
+		}
+		else if(s.name.Equals(saveBtn.name))
+		{
+			SaveLoad.save("savefile1");
+			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
+			{
+				removePlacementUI();
+			}
+		}
+		else if(s.name.Equals(loadBtn.name))
+		{
+			SaveLoad.loadGame("savefile1");
 			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
 			{
 				removePlacementUI();

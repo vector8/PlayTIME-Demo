@@ -1,19 +1,18 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TouchScript;
 using TouchScript.Gestures;
 
-using System;
-
 public class PathFollowing : MonoBehaviour 
 {
-    private List<Vector3> pathPoints = new List<Vector3>();             // Points on path
-    private List<LineRenderer> pathRenderer = new List<LineRenderer>(); // Line renderers to draw the path. Multiple line renderers needed to avoid bends in line
-    private GameObject pathRendererParent;                              // All line renderers are a child of this object
+    public List<Vector3> pathPoints = new List<Vector3>();             // Points on path
+	public List<LineRenderer> pathRenderer = new List<LineRenderer>(); // Line renderers to draw the path. Multiple line renderers needed to avoid bends in line
+	public GameObject pathRendererParent;                              // All line renderers are a child of this object
 
-	private int touchID;
-	private ITouchManager touchManager;
+	public int touchID;
+	public ITouchManager touchManager;
 
     public enum PathState
     {
