@@ -21,7 +21,8 @@ public class LevelDesignTIME : MonoBehaviour
 
 	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, saveBtn, loadBtn;
 	public GameObject pathSliderGroup, pathSliderTab, jumpSliderGroup, jumpSliderTab, moveSliderGroup, moveSliderTab;
-	public GameObject cameraBtn, cameraPanel, cameraOutline, horizontalScrollbar, verticalScrollbar;
+	public GameObject cameraBtn, cameraPanel, cameraOutline;
+	public GameObject pentaArrow, bottomCamCanvas;
 	
 	// Current or latest rfid tag read.
 	// Empty string means none active
@@ -51,7 +52,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private string pendingKey = "";
 
-	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", "4d004aef92", "4d004ab4ed"};
+	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", "4d004aef92", "4d004ab4ed", "3001ffcc05"};
 	private int testIndex = -1;
 
 	void Awake()
@@ -73,10 +74,11 @@ public class LevelDesignTIME : MonoBehaviour
 		jumpSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		moveSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		cameraBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
-		horizontalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
-		verticalScrollbar.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		saveBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		loadBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		bottomCamCanvas.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+
+		bottomCamCanvas.GetComponent<ReleaseGesture>().Released += buttonReleasedHandler;
 	}
 
     // Description:
@@ -87,7 +89,7 @@ public class LevelDesignTIME : MonoBehaviour
         // Update position
         if (updatePosition)
         {
-			PlacementUI.transform.position = new Vector3(touchPosition.x, touchPosition.y, -1.0f);
+			PlacementUI.transform.position = new Vector3(touchPosition.x, touchPosition.y, PlacementUI.transform.position.z);
         }
 
 		bool foregroundObjectPresent = levelManager.isObjectAtPosition(touchPosition), 
@@ -202,7 +204,7 @@ public class LevelDesignTIME : MonoBehaviour
 						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
 						xpos = Mathf.Max(Mathf.Min(xpos, pathSliderGroup.transform.position.x + SLIDER_MAX_X), pathSliderGroup.transform.position.x + SLIDER_MIN_X);
 
-						pathSliderTab.transform.position = new Vector3(xpos, pathSliderTab.transform.position.y, 0f);
+						pathSliderTab.transform.position = new Vector3(xpos, pathSliderTab.transform.position.y, pathSliderTab.transform.position.z);
 
 						float newPlaybackTimeSec = (1 - (pathSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 1f;
 						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
@@ -238,7 +240,7 @@ public class LevelDesignTIME : MonoBehaviour
 						float ypos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).y;
 						ypos = Mathf.Max(Mathf.Min(ypos, jumpSliderGroup.transform.position.y + SLIDER_MAX_X), jumpSliderGroup.transform.position.y + SLIDER_MIN_X);
 						
-						jumpSliderTab.transform.position = new Vector3(jumpSliderTab.transform.position.x, ypos, 0f);
+						jumpSliderTab.transform.position = new Vector3(jumpSliderTab.transform.position.x, ypos, jumpSliderTab.transform.position.z);
 						
 						float newJumpBurst = ((jumpSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
 						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
@@ -273,7 +275,7 @@ public class LevelDesignTIME : MonoBehaviour
 						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
 						xpos = Mathf.Max(Mathf.Min(xpos, moveSliderGroup.transform.position.x + SLIDER_MAX_X), moveSliderGroup.transform.position.x + SLIDER_MIN_X);
 						
-						moveSliderTab.transform.position = new Vector3(xpos, moveSliderTab.transform.position.y, 0f);
+						moveSliderTab.transform.position = new Vector3(xpos, moveSliderTab.transform.position.y, moveSliderTab.transform.position.z);
 						
 						float newMoveSpeed = ((moveSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
 						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
@@ -298,133 +300,60 @@ public class LevelDesignTIME : MonoBehaviour
 			if(!removed)
 			{
 				lastTouchPosition = touchPosition;
-				if(firstTouch)
+				if(dragging)
 				{
-					firstTouch = false;
-					PlacementUI.SetActive(true);
-
-					if(activeKey != "" && (database[activeKey].first.tag == "Background" || !levelManager.isObjectAtPosition(touchPosition)))
+					//print (Vector2.Distance(touchPosition, dragStartPosition));
+					if(Vector2.Distance(touchPosition, dragStartPosition) > 0.1f)
 					{
-						database[activeKey].first.SetActive(true);
-						database[activeKey].second.SetActive(true);
-					}
-
-					if(activeKey != "" && database[activeKey].first.tag == "Background")
-					{
-						if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
+						if(activeKey != "" && database[activeKey].first.tag == "Background")
 						{
-							PlaceObject(touchPosition, true);
-						}
-						else
-						{
-							RemoveObject(true);
-						}
-						dragging = true;
-						dragStartPosition = touchPosition;
-					}
-					else if(levelManager.isObjectAtPosition(touchPosition))
-					{
-						dragging = true;
-						dragStartPosition = touchPosition;
-					}
-				}
-				else
-				{
-					if(dragging)
-					{
-						//print (Vector2.Distance(touchPosition, dragStartPosition));
-						if(Vector2.Distance(touchPosition, dragStartPosition) > 0.1f)
-						{
-							if(activeKey != "" && database[activeKey].first.tag == "Background")
+							if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
 							{
-								if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
-								{
-									PlaceObject(touchPosition, true);
-								}
-								else
-								{
-									RemoveObject(true);
-								}
-								dragStartPosition = touchPosition;
+								PlaceObject(touchPosition, true);
 							}
 							else
 							{
-								if(activeKey != "")
-								{
-									database[activeKey].first.SetActive(false);
-									database[activeKey].second.SetActive(false);
-								}
-
-								if(levelManager.isObjectAtPosition(dragStartPosition))
-								{
-									draggingObject = levelManager.getObjectAtPosition(dragStartPosition);
-								}
-								else
-								{
-									draggingObject = levelManager.getBackgroundObjectAtPosition(dragStartPosition);
-								}
-
-								keyToReset = activeKey;
-								activeKey = "";
-								shouldResetKey = true;
-								dragging = false;
+								RemoveObject(true);
 							}
+							dragStartPosition = touchPosition;
+						}
+						else
+						{
+							if(activeKey != "")
+							{
+								database[activeKey].first.SetActive(false);
+								database[activeKey].second.SetActive(false);
+							}
+
+							if(levelManager.isObjectAtPosition(dragStartPosition))
+							{
+								draggingObject = levelManager.getObjectAtPosition(dragStartPosition);
+							}
+							else
+							{
+								draggingObject = levelManager.getBackgroundObjectAtPosition(dragStartPosition);
+							}
+
+							keyToReset = activeKey;
+							activeKey = "";
+							shouldResetKey = true;
+							dragging = false;
 						}
 					}
-
-					if(draggingObject != null)
-					{
-						draggingObject.first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
-						draggingObject.second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
-					}
-					else if(activeKey != "")
-					{
-						database[activeKey].first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
-						database[activeKey].second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
-					}
-					UpdatePlacementUI(touchPosition);
 				}
-			}
-		}
-		else
-		{
-			PlacementUI.SetActive(false);
-			firstTouch = true;
-			
-			if(activeKey != "" && database[activeKey].first.activeSelf) 
-			{
-				if((database[activeKey].first.tag != "Background" || database[activeKey].first.tag == "Background" && database[activeKey].first.GetComponent<SpriteRenderer>() != null))
+
+				if(draggingObject != null)
 				{
-					PlaceObject(lastTouchPosition);
+					draggingObject.first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
+					draggingObject.second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
 				}
-
-				database[activeKey].first.SetActive(false);
-				database[activeKey].second.SetActive(false);
-			}
-
-			if(lastObjectSelected != null)
-			{
-				lastObjectSelected.first.transform.position = lastObjectSelected.second.transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
-
-				PathFollowing p = lastObjectSelected.first.GetComponent<PathFollowing>();
-				if (p != null)
+				else if(activeKey != "")
 				{
-					p.setStateToIdle();
+					database[activeKey].first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
+					database[activeKey].second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
 				}
-
-				lastObjectSelected = null;
+				UpdatePlacementUI(touchPosition);
 			}
-			
-			if(shouldResetKey)
-			{
-				activeKey = keyToReset;
-				keyToReset = "";
-				shouldResetKey = false;
-			}
-
-			draggingObject = null;
-			removed = false;
-			dragging = false;
 		}
 
         // Cycle through the prefabs 
@@ -436,11 +365,6 @@ public class LevelDesignTIME : MonoBehaviour
 				testIndex = 0;
 			}
 			rfidFound(testRFIDKeys[testIndex]);
-        }
-
-        if (Input.GetKeyUp(KeyCode.P))
-        {
-			levelManager.revert();
         }
 	}
 
@@ -553,8 +477,7 @@ public class LevelDesignTIME : MonoBehaviour
 				string[] vals = results[i].Split(delim, StringSplitOptions.None);
 				p.first.name = vals[0];
 				p.second.name = vals[0];
-				addComponentByName(p.first, vals[1], false, vals[2], vals[3], vals[4], vals[5]);
-				addComponentByName(p.second, vals[1], true, vals[2], vals[3], vals[4], vals[5]);
+				addComponentByName(p.first, p.second, vals[1], vals[2], vals[3], vals[4], vals[5]);
 			}
 
 			p.first.SetActive(false);
@@ -565,17 +488,20 @@ public class LevelDesignTIME : MonoBehaviour
 		pendingKey = "";
 	}
 
-	private void addComponentByName(GameObject go, string name, bool isStatic, string data1, string data2, string data3, string data4)
+	private void addComponentByName(GameObject go, GameObject staticGO, string name, string data1, string data2, string data3, string data4)
 	{
 		go.layer = LayerMask.NameToLayer("BlockingLayer");
+		staticGO.layer = LayerMask.NameToLayer("BlockingLayer");
 		switch(name)
 		{
 		case "PathFollowing":
-			go.AddComponent<PathFollowing>().initDrawing(0, !isStatic).setStateToIdle();
+			go.AddComponent<PathFollowing>().initDrawing(0, true).setStateToIdle();
+			staticGO.AddComponent<PathFollowing>().initDrawing(0, false).setStateToIdle();
 			break;
 		case "SpriteRenderer":
 		{
 			SpriteRenderer r = go.AddComponent<SpriteRenderer>();
+			SpriteRenderer sr = staticGO.AddComponent<SpriteRenderer>();
 			if(data1.Length > 0)
 			{
 				int index = data1.LastIndexOf('_');
@@ -589,35 +515,40 @@ public class LevelDesignTIME : MonoBehaviour
 						if(spriteIndex < sprites.Length)
 						{
 							r.sprite = sprites[spriteIndex];
+							sr.sprite = sprites[spriteIndex];
 						}
 					}
 				}
 				else
 				{
 					r.sprite = Resources.Load<Sprite>(data1);
+					sr.sprite = Resources.Load<Sprite>(data1);
 				}
 			}
 			if(data2.Length > 0)
 			{
 				r.sortingLayerName = data2;
+				sr.sortingLayerName = data2;
 			}
 		}
 			break;
 		case "Animator":
 			go.AddComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(data1);
+			staticGO.AddComponent<Animator>().runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>(data1);
 			break;
 		case "BoxCollider2D":
 		{
 			BoxCollider2D bc = go.AddComponent<BoxCollider2D>();
+			BoxCollider2D sbc = staticGO.AddComponent<BoxCollider2D>();
 			bool trigger;
 			if(Boolean.TryParse(data1, out trigger))
 			{
 				bc.isTrigger = trigger;
+				sbc.isTrigger = trigger;
 			}
 		}
 			break;
 		case "RigidBody2D":
-		if(!isStatic)
 		{
 			Rigidbody2D rb = go.AddComponent<Rigidbody2D>();
 			bool kinematic, fixedAngle;
@@ -632,19 +563,16 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 			break;
 		case "Tag":
-			if(data1 == "Background" || !isStatic)
+			go.tag = data1;
+			if(data1 == "Background")
 			{
-				go.tag = data1;
+				staticGO.tag = data1;
 			}
 			break;
 		case "CustomScript":
-			if(!isStatic)
-			{
-				go.AddComponent(Type.GetType(data1));
-			}
+			go.AddComponent(Type.GetType(data1));
 			break;
 		case "Move":
-			if(!isStatic)
 			{
 				Move mc = go.AddComponent<Move>();
 				mc.maxSpeed[0] = float.Parse(data1);
@@ -654,7 +582,6 @@ public class LevelDesignTIME : MonoBehaviour
 			}
 			break;
 		case "Jump":
-			if(!isStatic)
 			{
 				go.AddComponent<Jump>();
 
@@ -671,7 +598,6 @@ public class LevelDesignTIME : MonoBehaviour
 			}
 			break;
 		case "Health":
-			if(!isStatic)
 			{
 				BoxCollider2D c = null;
 				c = go.GetComponent<BoxCollider2D>();
@@ -694,7 +620,6 @@ public class LevelDesignTIME : MonoBehaviour
 			}
 			break;
 		case "Damage":
-			if(!isStatic)
 			{
 				BoxCollider2D c = null;
 				c = go.GetComponent<BoxCollider2D>();
@@ -709,9 +634,62 @@ public class LevelDesignTIME : MonoBehaviour
 				Int32.TryParse(data2, out d.directions);
 			}
 			break;
+		case "Resize":
+			{
+				Resize r = staticGO.AddComponent<Resize>();
+				r.arrowPrefab = pentaArrow;
+				r.nonStatic = go;
+			}
+			break;
 		default:
 			print ("Component " + name + " is undefined.");
 			break;
+		}
+	}
+
+	private void buttonReleasedHandler(object sender, EventArgs e)
+	{
+		ReleaseGesture gesture = (ReleaseGesture) sender;
+		GameObject s = gesture.gameObject;
+
+		if(s.name.Equals(bottomCamCanvas.name))
+		{
+			PlacementUI.SetActive(false);
+			
+			if(activeKey != "" && database[activeKey].first.activeSelf) 
+			{
+				if((database[activeKey].first.tag != "Background" || database[activeKey].first.tag == "Background" && database[activeKey].first.GetComponent<SpriteRenderer>() != null))
+				{
+					PlaceObject(lastTouchPosition);
+				}
+				
+				database[activeKey].first.SetActive(false);
+				database[activeKey].second.SetActive(false);
+			}
+			
+			if(lastObjectSelected != null)
+			{
+				lastObjectSelected.first.transform.position = lastObjectSelected.second.transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
+				
+				PathFollowing p = lastObjectSelected.first.GetComponent<PathFollowing>();
+				if (p != null)
+				{
+					p.setStateToIdle();
+				}
+				
+				lastObjectSelected = null;
+			}
+			
+			if(shouldResetKey)
+			{
+				activeKey = keyToReset;
+				keyToReset = "";
+				shouldResetKey = false;
+			}
+			
+			draggingObject = null;
+			removed = false;
+			dragging = false;
 		}
 	}
 
@@ -761,10 +739,6 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(resetBtn.name))
 		{
-			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
-			{
-				removePlacementUI();
-			}
 			levelManager.revert();
 		}
 		else if(s.name.Equals(exitBtn.name))
@@ -779,32 +753,44 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			cameraOutline.SetActive(!cameraOutline.activeSelf);
 			cameraPanel.SetActive(!cameraPanel.activeSelf);
-			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
-			{
-				removePlacementUI();
-			}
-		}
-		else if(s.name.Equals(horizontalScrollbar.name) || s.name.Equals(verticalScrollbar.name))
-		{
-			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
-			{
-				removePlacementUI();
-			}
 		}
 		else if(s.name.Equals(saveBtn.name))
 		{
 			SaveLoad.save("savefile1");
-			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
-			{
-				removePlacementUI();
-			}
 		}
 		else if(s.name.Equals(loadBtn.name))
 		{
 			SaveLoad.loadGame("savefile1");
-			if(gesture.ActiveTouches[0].Id == touchManager.ActiveTouches[0].Id)
+		}
+		else if(s.name.Equals(bottomCamCanvas.name))
+		{
+			Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position);
+			
+			PlacementUI.SetActive(true);
+			
+			if(activeKey != "" && (database[activeKey].first.tag == "Background" || !levelManager.isObjectAtPosition(touchPosition)))
 			{
-				removePlacementUI();
+				database[activeKey].first.SetActive(true);
+				database[activeKey].second.SetActive(true);
+			}
+			
+			if(activeKey != "" && database[activeKey].first.tag == "Background")
+			{
+				if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
+				{
+					PlaceObject(touchPosition, true);
+				}
+				else
+				{
+					RemoveObject(true);
+				}
+				dragging = true;
+				dragStartPosition = touchPosition;
+			}
+			else if(levelManager.isObjectAtPosition(touchPosition))
+			{
+				dragging = true;
+				dragStartPosition = touchPosition;
 			}
 		}
 	}

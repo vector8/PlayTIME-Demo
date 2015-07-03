@@ -13,6 +13,7 @@ public class ScrollBarControl : MonoBehaviour
 	public GameObject exitBtn;
 	public GameObject cameraBtn;
 	public GameObject cameraControlPanel;
+	public GameObject touchCanvas;
 	public float hScrollbarWidth;
 	public float vScrollbarWidth;
 	public float resetBtnOffset;
@@ -22,6 +23,7 @@ public class ScrollBarControl : MonoBehaviour
 	public Vector2 camPanelOffset;
 
 	private Camera bottomCam;
+	private const float UI_Z_POS = -7.5f;
 
 	// Use this for initialization
 	void Start () 
@@ -36,7 +38,7 @@ public class ScrollBarControl : MonoBehaviour
 	void Update () 
 	{
 		Vector3 pos = bottomCam.transform.position;
-		pos.z = 0;
+		pos.z = UI_Z_POS;
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - vScrollbarWidth / 2f;
 		verticalScrollbar.transform.position = pos;
 		Vector3 scale = verticalScrollbar.transform.localScale;
@@ -44,7 +46,7 @@ public class ScrollBarControl : MonoBehaviour
 		verticalScrollbar.transform.localScale = scale;
 		
 		pos = bottomCam.transform.position;
-		pos.z = 0;
+		pos.z = UI_Z_POS;
 		pos.y -= bottomCam.orthographicSize;
 		pos.y += hScrollbarWidth / 2f;
 		horizontalScrollbar.transform.position = pos;
@@ -53,28 +55,33 @@ public class ScrollBarControl : MonoBehaviour
 		horizontalScrollbar.transform.localScale = scale;
 		
 		pos = bottomCam.transform.position;
-		pos.z = 0;
+		pos.z = UI_Z_POS;
 		pos.x -= (bottomCam.orthographicSize * bottomCam.aspect) - resetBtnOffset;
 		pos.y -= bottomCam.orthographicSize - verticalBtnOffset;
 		resetBtn.transform.position = pos;
 		
 		pos = bottomCam.transform.position;
-		pos.z = 0;
+		pos.z = UI_Z_POS;
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - exitBtnOffset;
 		pos.y -= bottomCam.orthographicSize - verticalBtnOffset;
 		exitBtn.transform.position = pos;
 
 		pos = bottomCam.transform.position;
-		pos.z = 0;
+		pos.z = UI_Z_POS;
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - camBtnOffset.x;
 		pos.y += bottomCam.orthographicSize - camBtnOffset.y;
 		cameraBtn.transform.position = pos;
 
 		pos = bottomCam.transform.position;
-		pos.z = 0;
+		pos.z = UI_Z_POS;
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - camPanelOffset.x;
 		pos.y += bottomCam.orthographicSize - camPanelOffset.y;
 		cameraControlPanel.transform.position = pos;
+
+		scale = touchCanvas.transform.localScale;
+		scale.x = 2f * bottomCam.orthographicSize * bottomCam.aspect;
+		scale.y = 2f * bottomCam.orthographicSize;
+		touchCanvas.transform.localScale = scale;
 	}
 
 	private void scrollbarPannedHandler(object sender, EventArgs e)

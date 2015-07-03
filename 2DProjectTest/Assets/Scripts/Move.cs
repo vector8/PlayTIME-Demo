@@ -16,18 +16,43 @@ public class Move : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
+		Animator animator = GetComponent<Animator>();
+
 		float horizSpeed = Input.GetAxis("Horizontal");
 		float vertSpeed = Input.GetAxis("Vertical");
 
-		if(horizSpeed > 0)
+		if(!Mathf.Approximately(horizSpeed, 0f))
 		{
-			currentSpeed[RIGHT] = horizSpeed * maxSpeed[RIGHT];
-			currentSpeed[LEFT] = 0;
+			if(animator != null)
+			{
+				animator.SetBool("HorizontalMovement", true);
+			}
+
+			if(horizSpeed > 0)
+			{
+				currentSpeed[RIGHT] = horizSpeed * maxSpeed[RIGHT];
+				currentSpeed[LEFT] = 0;
+				Vector3 scale = transform.localScale;
+				scale.x = Mathf.Abs(scale.x);
+				transform.localScale = scale;
+			}
+			else
+			{
+				currentSpeed[LEFT] = -horizSpeed * maxSpeed[LEFT];
+				currentSpeed[RIGHT] = 0;
+				Vector3 scale = transform.localScale;
+				scale.x = -Mathf.Abs(scale.x);
+				transform.localScale = scale;
+			}
 		}
 		else
 		{
-			currentSpeed[LEFT] = -horizSpeed * maxSpeed[LEFT];
-			currentSpeed[RIGHT] = 0;
+			if(animator != null)
+			{
+				animator.SetBool("HorizontalMovement", false);
+			}
+			currentSpeed[LEFT] = 0f;
+			currentSpeed[RIGHT] = 0f;
 		}
 
 		if(vertSpeed > 0)
