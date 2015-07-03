@@ -17,6 +17,8 @@ public class Jump : MonoBehaviour
 
 	void Update()
 	{
+		Animator animator = GetComponent<Animator>();
+
 		if(jumpTimer > 0)
 		{
 			jumpTimer -= Time.deltaTime;
@@ -27,6 +29,7 @@ public class Jump : MonoBehaviour
 			jumped = true;
 			canJump = false;
 			jumpTimer = JUMP_COOLDOWN;
+			animator.SetBool("Jumping", true);
 		}
 	}
 	
@@ -55,6 +58,8 @@ public class Jump : MonoBehaviour
 				{
 					canJump = true;
 					print ("Jump reset");
+					Animator animator = GetComponent<Animator>();
+					animator.SetBool("Jumping", false);
 					return;
 				}
 			}
