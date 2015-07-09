@@ -50,8 +50,6 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
-	private string pendingKey = "";
-
 	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", "4d004aef92", "4d004ab4ed", "3001ffcc05"};
 	private int testIndex = -1;
 
@@ -433,21 +431,19 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else
 		{
-			pendingKey = key;
-
 			string url = "http://" + databaseAddress + "/playtime/getComponents.php";
 			
-			print("fetching key " + pendingKey);
+			print("fetching key " + key);
 			
-			StartCoroutine(pollDatabase(url));
+			StartCoroutine(pollDatabase(url, key));
 		}
     }
 
-	private IEnumerator pollDatabase(string url)
+	private IEnumerator pollDatabase(string url, string rfidKey, bool fromReader = true)
 	{
 		WWWForm form = new WWWForm();
 
-		form.AddField("rfidKey", pendingKey);
+		form.AddField("rfidKey", rfidKey);
 		
 		WWW www = new WWW(url, form);
 
@@ -457,16 +453,19 @@ public class LevelDesignTIME : MonoBehaviour
 		string[] results = www.text.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
 		if(results.Length == 0)
 		{
-			print ("No components were found for RFID key " + pendingKey + " in the database.");
+			print ("No components were found for RFID key " + rfidKey + " in the database.");
 		}
 		else
 		{
-			if(activeKey != "")
+			if(fromReader)
 			{
-				database[activeKey].first.SetActive(false);
-				database[activeKey].second.SetActive(false);
+				if(activeKey != "")
+				{
+					database[activeKey].first.SetActive(false);
+					database[activeKey].second.SetActive(false);
+				}
+				activeKey = rfidKey;
 			}
-			activeKey = pendingKey;
 
 			Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>();
 
@@ -477,18 +476,16 @@ public class LevelDesignTIME : MonoBehaviour
 				string[] vals = results[i].Split(delim, StringSplitOptions.None);
 				p.first.name = vals[0];
 				p.second.name = vals[0];
-				addComponentByName(p.first, p.second, vals[1], vals[2], vals[3], vals[4], vals[5]);
+				yield return StartCoroutine(addComponentByName(p.first, p.second, vals[1], vals[2], vals[3], vals[4], vals[5]));
 			}
 
 			p.first.SetActive(false);
 			p.second.SetActive(false);
-			database.Add(activeKey, p);
+			database.Add(rfidKey, p);
 		}
-
-		pendingKey = "";
 	}
 
-	private void addComponentByName(GameObject go, GameObject staticGO, string name, string data1, string data2, string data3, string data4)
+	private IEnumerator addComponentByName(GameObject go, GameObject staticGO, string name, string data1, string data2, string data3, string data4)
 	{
 		go.layer = LayerMask.NameToLayer("BlockingLayer");
 		staticGO.layer = LayerMask.NameToLayer("BlockingLayer");
@@ -573,73 +570,137 @@ public class LevelDesignTIME : MonoBehaviour
 			go.AddComponent(Type.GetType(data1));
 			break;
 		case "Move":
-			{
-				Move mc = go.AddComponent<Move>();
-				mc.maxSpeed[0] = float.Parse(data1);
-				mc.maxSpeed[1] = float.Parse(data2);
-				mc.maxSpeed[2] = float.Parse(data3);
-				mc.maxSpeed[3] = float.Parse(data4);
-			}
+		{
+			Move mc = go.AddComponent<Move>();
+			mc.maxSpeed[0] = float.Parse(data1);
+			mc.maxSpeed[1] = float.Parse(data2);
+			mc.maxSpeed[2] = float.Parse(data3);
+			mc.maxSpeed[3] = float.Parse(data4);
+		}
 			break;
 		case "Jump":
+		{
+			go.AddComponent<Jump>();
+
+			Rigidbody2D rb = null;
+			rb = go.GetComponent<Rigidbody2D>();
+
+			if(rb == null)
 			{
-				go.AddComponent<Jump>();
-
-				Rigidbody2D rb = null;
-				rb = go.GetComponent<Rigidbody2D>();
-
-				if(rb == null)
-				{
-					rb = go.AddComponent<Rigidbody2D>();
-				}
-
-				rb.isKinematic = false;
-				rb.fixedAngle = true;
+				rb = go.AddComponent<Rigidbody2D>();
 			}
+
+			rb.isKinematic = false;
+			rb.fixedAngle = true;
+		}
 			break;
 		case "Health":
+		{
+			BoxCollider2D c = null;
+			c = go.GetComponent<BoxCollider2D>();
+
+			if(c == null)
 			{
-				BoxCollider2D c = null;
-				c = go.GetComponent<BoxCollider2D>();
-
-				if(c == null)
-				{
-					c = go.AddComponent<BoxCollider2D>();
-				}
-
-				Health h = go.AddComponent<Health>();
-				Int32.TryParse(data1, out h.maxHP);
-				h.enemyTag = data2;
-				Int32.TryParse(data3, out h.directions);
-				int deathAction;
-				if(Int32.TryParse(data4, out deathAction))
-				{
-					h.setDeathAction(deathAction);
-				}
-
+				c = go.AddComponent<BoxCollider2D>();
 			}
+
+			Health h = go.AddComponent<Health>();
+			Int32.TryParse(data1, out h.maxHP);
+			h.enemyTag = data2;
+			Int32.TryParse(data3, out h.directions);
+			int deathAction;
+			if(Int32.TryParse(data4, out deathAction))
+			{
+				h.setDeathAction(deathAction);
+			}
+		}
 			break;
 		case "Damage":
+		{
+			BoxCollider2D c = null;
+			c = go.GetComponent<BoxCollider2D>();
+			
+			if(c == null)
 			{
-				BoxCollider2D c = null;
-				c = go.GetComponent<BoxCollider2D>();
-				
-				if(c == null)
-				{
-					c = go.AddComponent<BoxCollider2D>();
-				}
-				
-				Damage d = go.AddComponent<Damage>();
-				Int32.TryParse(data1, out d.dmg);
-				Int32.TryParse(data2, out d.directions);
+				c = go.AddComponent<BoxCollider2D>();
 			}
+			
+			Damage d = go.AddComponent<Damage>();
+			Int32.TryParse(data1, out d.dmg);
+			Int32.TryParse(data2, out d.directions);
+		}
 			break;
 		case "Resize":
+		{
+			Resize r = staticGO.AddComponent<Resize>();
+			r.arrowPrefab = pentaArrow;
+			r.nonStatic = go;
+		}
+			break;
+		case "CollideTrigger":
+		{
+			CollideTrigger ct = go.GetComponent<CollideTrigger>();
+			if(ct == null)
 			{
-				Resize r = staticGO.AddComponent<Resize>();
-				r.arrowPrefab = pentaArrow;
-				r.nonStatic = go;
+				ct = go.AddComponent<CollideTrigger>();
 			}
+			CustomAction.ActionTypes a = (CustomAction.ActionTypes)Enum.Parse(typeof(CustomAction.ActionTypes), data1);
+			switch(a)
+			{
+			case CustomAction.ActionTypes.Spawn:
+			{
+				Spawn s = go.AddComponent<Spawn>();
+				string rfidKey = data3;
+
+				if(database.ContainsKey(rfidKey))
+				{
+					s.toSpawn = database[rfidKey].first;
+				}
+				else
+				{
+					string url = "http://" + databaseAddress + "/playtime/getComponents.php";
+					yield return StartCoroutine(pollDatabase(url, rfidKey, false));
+					if(database.ContainsKey(rfidKey))
+					{
+						s.toSpawn = database[rfidKey].first;
+					}
+				}
+
+				int spawnCount = 0;
+				Int32.TryParse(data4, out spawnCount);
+				s.setMaxSpawnCount(spawnCount);
+				int directions;
+				Int32.TryParse(data2, out directions);
+				ct.actions.Add(s);
+				ct.directions.Add(directions);
+			}
+				break;
+			case CustomAction.ActionTypes.Despawn:
+			{
+				Despawn d = go.AddComponent<Despawn>();
+				int directions;
+				Int32.TryParse(data2, out directions);
+				ct.actions.Add(d);
+				ct.directions.Add(directions);
+			}
+				break; 
+			case CustomAction.ActionTypes.Transfigure:
+			{
+				Transfigure t = go.AddComponent<Transfigure>();
+				int directions;
+				Int32.TryParse(data2, out directions);
+				t.targetAnimControllerName = data3;
+				bool reversible;
+				Boolean.TryParse(data4, out reversible);
+				t.reversible = reversible;
+				ct.actions.Add(t);
+				ct.directions.Add(directions);
+			}
+				break;
+			default:
+				break;
+			}
+		}
 			break;
 		default:
 			print ("Component " + name + " is undefined.");

@@ -57,7 +57,6 @@ public class Jump : MonoBehaviour
 				if(contactDir.y < 0 && angle >= 45f && angle <= 135f)
 				{
 					canJump = true;
-					print ("Jump reset");
 					Animator animator = GetComponent<Animator>();
 					animator.SetBool("Jumping", false);
 					return;

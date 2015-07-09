@@ -57,7 +57,9 @@ public class PathFollowing : MonoBehaviour
 	void Update () 
     {
 		if (Input.GetKey(KeyCode.I) || (int) (Input.GetAxisRaw ("Horizontal")) != 0 || (int) (Input.GetAxisRaw ("Vertical")) != 0)
-            currentState = PathState.Playing;
+		{
+			setStateToPlaying();
+		}
 
         if (currentState == PathState.Drawing)
         {
@@ -144,7 +146,7 @@ public class PathFollowing : MonoBehaviour
 
 		if(!mousePosSet)
 		{
-			currentState = PathState.Idle;
+			setStateToIdle();
 			return;
 		}
 
@@ -208,6 +210,12 @@ public class PathFollowing : MonoBehaviour
 		currentPathPlayBackTime = 0;
 		currentPoint = 0;
 		
+		Animator anim = GetComponent<Animator>();
+		if(anim != null)
+		{
+			anim.SetBool("HorizontalMovement", false);
+		}
+		
 		return this;
 	}
 
@@ -216,15 +224,19 @@ public class PathFollowing : MonoBehaviour
 		currentState = PathState.Playing;
 		currentPathPlayBackTime = 0;
 		currentPoint = 0;
-		
+
+		Animator anim = GetComponent<Animator>();
+		if(anim != null)
+		{
+			anim.SetBool("HorizontalMovement", true);
+		}
+
 		return this;
 	}
 
 	void OnDestroy()
 	{
-		print ("path destroyed.");
 		DestroyImmediate(pathRendererParent);
-        //Destroy(this.GetComponent<Renderer>().material);
 	}
 
     // Meant to be called when this game object is touched

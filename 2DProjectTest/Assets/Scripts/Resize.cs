@@ -73,7 +73,7 @@ public class Resize : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
-		bool touched = false;
+		float yDiffTop = 0f, yDiffBot = 0f, xDiffRight = 0f, xDiffLeft = 0f;
 
 		if(topTouchID > -1)
 		{
@@ -87,9 +87,8 @@ public class Resize : MonoBehaviour
 					
 					float ypos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).y;
 					ypos = Mathf.Max(ypos, gameObject.transform.position.y + 0.1f);
-					
-					top.transform.position = new Vector3(top.transform.position.x, ypos, top.transform.position.z);
-					touched = true;
+
+					yDiffTop = (ypos - top.transform.position.y);
 					break;
 				}
 			}
@@ -113,8 +112,7 @@ public class Resize : MonoBehaviour
 					float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
 					xpos = Mathf.Max(xpos, gameObject.transform.position.x + 0.1f);
 					
-					right.transform.position = new Vector3(xpos, right.transform.position.y, right.transform.position.z);
-					touched = true;
+					xDiffRight = (xpos - right.transform.position.x);
 					break;
 				}
 			}
@@ -136,10 +134,9 @@ public class Resize : MonoBehaviour
 					found = true;
 					
 					float ypos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).y;
-					ypos = Mathf.Min(ypos, gameObject.transform.position.y + 0.1f);
+					ypos = Mathf.Min(ypos, gameObject.transform.position.y - 0.1f);
 					
-					bottom.transform.position = new Vector3(bottom.transform.position.x, ypos, bottom.transform.position.z);
-					touched = true;
+					yDiffBot = (ypos - bottom.transform.position.y);
 					break;
 				}
 			}
@@ -161,10 +158,9 @@ public class Resize : MonoBehaviour
 					found = true;
 					
 					float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
-					xpos = Mathf.Min(xpos, gameObject.transform.position.x + 0.1f);
+					xpos = Mathf.Min(xpos, gameObject.transform.position.x - 0.1f);
 					
-					left.transform.position = new Vector3(xpos, left.transform.position.y, left.transform.position.z);
-					touched = true;
+					xDiffLeft = (xpos - left.transform.position.x);
 					break;
 				}
 			}
@@ -175,21 +171,12 @@ public class Resize : MonoBehaviour
 			}
 		}
 
-		if(touched)
+		if(!Mathf.Approximately(yDiffTop, 0f) || !Mathf.Approximately(yDiffBot, 0f) ||
+		   !Mathf.Approximately(xDiffRight, 0f) || !Mathf.Approximately(xDiffLeft, 0f))
 		{
-			Vector3 newPos = gameObject.transform.position;
-			newPos.x = (right.transform.position.x + left.transform.position.x) / 2f;
-			newPos.y = (top.transform.position.y + bottom.transform.position.y) / 2f;
-			Vector3 difference = newPos - gameObject.transform.position;
-			gameObject.transform.Translate(difference);
-			top.transform.position = top.transform.position + new Vector3(0f, -difference.y, 0f);
-			right.transform.position = right.transform.position + new Vector3(-difference.x, 0f, 0f);
-			bottom.transform.position = bottom.transform.position + new Vector3(0f, -difference.y, 0f);
-			left.transform.position = left.transform.position + new Vector3(-difference.x, 0f, 0f);
-
 			Vector3 newScale = new Vector3(1f, 1f, 1f);
-			newScale.x = (right.transform.position.x - left.transform.position.x) / (originalExtents.x - originalExtents.z);
-			newScale.y = (top.transform.position.y - bottom.transform.position.y) / (originalExtents.w - originalExtents.y);
+			newScale.x = ((xDiffRight - xDiffLeft) + right.transform.position.x - left.transform.position.x) / (originalExtents.x - originalExtents.z);
+			newScale.y = ((yDiffTop - yDiffBot) + top.transform.position.y - bottom.transform.position.y) / (originalExtents.w - originalExtents.y);
 
 			gameObject.transform.localScale = newScale;
 			newScale = new Vector3(1f / newScale.x, 1f / newScale.y, 1f);
@@ -199,6 +186,17 @@ public class Resize : MonoBehaviour
 			newScale = new Vector3(newScale.y, newScale.x, 1f);
 			top.transform.localScale = newScale;
 			bottom.transform.localScale = newScale;
+
+			Vector3 newpos = gameObject.transform.position;
+			newpos.x += 0.5f * (xDiffRight + xDiffLeft);
+			newpos.y += 0.5f * (yDiffTop + yDiffBot);
+			gameObject.transform.position = newpos;
+
+			// Transform top-screen object to reflect the bottom-screen object
+			Vector3 pos	= gameObject.transform.position;
+			pos.y += LevelManager.SCREEN_GAP;
+			nonStatic.transform.position = pos;
+			nonStatic.transform.localScale = gameObject.transform.localScale;
 		}
 	}
 
