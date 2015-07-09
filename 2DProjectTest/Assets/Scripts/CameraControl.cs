@@ -28,6 +28,7 @@ public class CameraControl : MonoBehaviour
 	private Vector3 originalTargetBtnPosition;
 	private int targetBtnTouchID = -1;
 	private GameObject followTarget = null;
+	private Vector2 followOffset = new Vector2();
 
 	// Use this for initialization
 	void Start () 
@@ -57,8 +58,25 @@ public class CameraControl : MonoBehaviour
 
 		if(followTarget != null)
 		{
-			camPos.x = followTarget.transform.position.x;
-			camPos.y = followTarget.transform.position.y;
+			if(panBtnsPressed[0])
+			{
+				followOffset.y += panSpeed * Time.deltaTime;
+			}
+			if(panBtnsPressed[1])
+			{
+				followOffset.x += panSpeed * Time.deltaTime;
+			}
+			if(panBtnsPressed[2])
+			{
+				followOffset.y -= panSpeed * Time.deltaTime;
+			}
+			if(panBtnsPressed[3])
+			{
+				followOffset.x -= panSpeed * Time.deltaTime;
+			}
+
+			camPos.x = followTarget.transform.position.x + followOffset.x;
+			camPos.y = followTarget.transform.position.y + followOffset.y;
 		}
 		else
 		{
@@ -136,7 +154,6 @@ public class CameraControl : MonoBehaviour
 			if(s.name.Equals(panBtns[i].name))
 			{
 				panBtnsPressed[i] = true;
-				followTarget = null;
 				return;
 			}
 		}

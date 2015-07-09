@@ -30,6 +30,8 @@ public class LevelManager
 	private List<GameObject> backgroundPlacedObjects = new List<GameObject>();
 	private List<GameObject> staticBackgroundPlacedObjects = new List<GameObject>();
 
+	private List<GameObject> spawnedObjects = new List<GameObject>();
+
 	void Awake()
 	{
 		instance = this;
@@ -43,6 +45,14 @@ public class LevelManager
 		GameObject sg = GameObject.Instantiate(staticToSpawn);
 		sg.transform.position = position;
 		sg.transform.parent = parent;
+
+		// Special behaviour for Resize component
+		Resize r = sg.GetComponent<Resize>();
+		if(r != null)
+		{
+			r.nonStatic = g;
+		}
+
 		// Store placed object
 		if(g.tag == "Background")
 		{
@@ -54,6 +64,15 @@ public class LevelManager
 			placedObjects.Add(g);
 			staticPlacedObjects.Add(sg);
 		}
+	}
+
+	public void placeSpawnedObject(Vector2 position, GameObject toSpawn, Transform parent)
+	{
+		GameObject g = GameObject.Instantiate(toSpawn);
+		g.transform.position = position;
+		g.transform.parent = parent;
+		g.SetActive(true);
+		spawnedObjects.Add(g);
 	}
 
 	public void removeObject(Vector2 position, bool backgroundOnly)
@@ -160,6 +179,11 @@ public class LevelManager
 			{
 				p.setStateToIdle();
 			}
+			CollideTrigger ct = placedObjects[i].GetComponent<CollideTrigger>();
+			if(ct != null)
+			{
+				ct.reset();
+			}
 		}
 
 		for (int i = 0; i < backgroundPlacedObjects.Count; i++)
@@ -171,6 +195,11 @@ public class LevelManager
 			{
 				p.setStateToIdle();
 			}
+		}
+
+		for(int i = 0; i < spawnedObjects.Count; i++)
+		{
+			GameObject.DestroyImmediate(spawnedObjects[i]);
 		}
 	}
 
