@@ -8,9 +8,11 @@ public class Spawn : CustomAction
 	public int maxSpawnCount;
 	public int currentSpawnCount;
 
+	public string targetTag;
+
 	public override void run(GameObject other)
 	{
-		if(toSpawn != null && currentSpawnCount > 0)
+		if(toSpawn != null && currentSpawnCount > 0 && other.tag.Equals(targetTag))
 		{
 			LevelManager.instance.placeSpawnedObject(gameObject.transform.position + new Vector3(0f, 1f), toSpawn, gameObject.transform.parent);
 			currentSpawnCount--;

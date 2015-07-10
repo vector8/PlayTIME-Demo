@@ -3,9 +3,14 @@ using System.Collections;
 
 public class Despawn : CustomAction
 {
+	public string targetTag;
+
 	public override void run(GameObject other)
 	{
-		gameObject.SetActive(false);
+		if(other.tag.Equals(targetTag))
+		{
+			gameObject.SetActive(false);
+		}
 	}
 
 	public override void reset()

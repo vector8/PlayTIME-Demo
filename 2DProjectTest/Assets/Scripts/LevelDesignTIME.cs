@@ -476,7 +476,7 @@ public class LevelDesignTIME : MonoBehaviour
 				string[] vals = results[i].Split(delim, StringSplitOptions.None);
 				p.first.name = vals[0];
 				p.second.name = vals[0];
-				yield return StartCoroutine(addComponentByName(p.first, p.second, vals[1], vals[2], vals[3], vals[4], vals[5]));
+				yield return StartCoroutine(addComponentByName(p.first, p.second, vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]));
 			}
 
 			p.first.SetActive(false);
@@ -485,7 +485,7 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 	}
 
-	private IEnumerator addComponentByName(GameObject go, GameObject staticGO, string name, string data1, string data2, string data3, string data4)
+	private IEnumerator addComponentByName(GameObject go, GameObject staticGO, string name, string data1, string data2, string data3, string data4, string data5)
 	{
 		go.layer = LayerMask.NameToLayer("BlockingLayer");
 		staticGO.layer = LayerMask.NameToLayer("BlockingLayer");
@@ -650,7 +650,7 @@ public class LevelDesignTIME : MonoBehaviour
 			case CustomAction.ActionTypes.Spawn:
 			{
 				Spawn s = go.AddComponent<Spawn>();
-				string rfidKey = data3;
+				string rfidKey = data4;
 
 				if(database.ContainsKey(rfidKey))
 				{
@@ -667,10 +667,11 @@ public class LevelDesignTIME : MonoBehaviour
 				}
 
 				int spawnCount = 0;
-				Int32.TryParse(data4, out spawnCount);
+				Int32.TryParse(data5, out spawnCount);
 				s.setMaxSpawnCount(spawnCount);
 				int directions;
 				Int32.TryParse(data2, out directions);
+				s.targetTag = data3;
 				ct.actions.Add(s);
 				ct.directions.Add(directions);
 			}
@@ -680,6 +681,7 @@ public class LevelDesignTIME : MonoBehaviour
 				Despawn d = go.AddComponent<Despawn>();
 				int directions;
 				Int32.TryParse(data2, out directions);
+				d.targetTag = data3;
 				ct.actions.Add(d);
 				ct.directions.Add(directions);
 			}
@@ -689,10 +691,11 @@ public class LevelDesignTIME : MonoBehaviour
 				Transfigure t = go.AddComponent<Transfigure>();
 				int directions;
 				Int32.TryParse(data2, out directions);
-				t.targetAnimControllerName = data3;
+				t.targetAnimControllerName = data4;
 				bool reversible;
-				Boolean.TryParse(data4, out reversible);
+				Boolean.TryParse(data5, out reversible);
 				t.reversible = reversible;
+				t.targetTag = data3;
 				ct.actions.Add(t);
 				ct.directions.Add(directions);
 			}
