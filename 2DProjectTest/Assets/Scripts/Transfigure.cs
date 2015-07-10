@@ -5,14 +5,34 @@ public class Transfigure : CustomAction
 {
 	public string targetAnimControllerName;
 	public bool reversible;
+	public string targetTag;
 
 	private RuntimeAnimatorController originalAnimController = null;
 	private RuntimeAnimatorController targetAnimController = null;
 	private bool done = false;
+	private SpriteRenderer sr;
+	private BoxCollider2D bc;
+
+	void Update()
+	{
+		// Resize BoxCollider2D in case the size of the sprite has changed
+		if(sr == null)
+		{
+			sr = gameObject.GetComponent<SpriteRenderer>();
+		}
+		if(bc == null)
+		{
+			bc = gameObject.GetComponent<BoxCollider2D>();
+		}
+		if(sr != null && bc != null)
+		{
+			bc.size = sr.bounds.size;
+		}
+	}
 
 	public override void run(GameObject other)
 	{
-		if(!done || reversible)
+		if((!done || reversible) && other.tag.Equals(targetTag))
 		{
 			Animator anim = gameObject.GetComponent<Animator>();
 			if(anim == null)
