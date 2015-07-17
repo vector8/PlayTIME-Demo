@@ -20,7 +20,8 @@ public class LevelDesignTIME : MonoBehaviour
     public Vector2 PlacementUIOffsetInPixels;
 
 	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, saveBtn, loadBtn;
-	public GameObject pathSliderGroup, pathSliderTab, jumpSliderGroup, jumpSliderTab, moveSliderGroup, moveSliderTab;
+	public GameObject pathSliderGroup, pathSliderTab, jumpSliderGroup, jumpSliderTab, moveSliderGroup, moveSliderTab, 
+					  aiHorizMoveSliderGroup, aiHorizMoveSliderTab;
 	public GameObject cameraBtn, cameraPanel, cameraOutline;
 	public GameObject pentaArrow, bottomCamCanvas;
 	
@@ -35,7 +36,7 @@ public class LevelDesignTIME : MonoBehaviour
 	private Vector3 dragStartPosition;
 
 	private bool removed = false;
-	private bool dragging = true;
+	private bool dragging = false;
 	private bool firstTouch = true;
 	private Pair<GameObject, GameObject> draggingObject = null;
 	//private int lastGridIdx;
@@ -44,7 +45,7 @@ public class LevelDesignTIME : MonoBehaviour
 
     private bool previewMode = false;
 	
-	private int pathSliderTouchID = -1, jumpSliderTouchID = -1, moveSliderTouchID = -1;
+	private int pathSliderTouchID = -1, jumpSliderTouchID = -1, moveSliderTouchID = -1, aiHorizMoveSliderTouchID = -1;
 	private const float SLIDER_MAX_X = 1.6455f;
 	private const float SLIDER_MIN_X = -1.6455f;
 
@@ -71,6 +72,7 @@ public class LevelDesignTIME : MonoBehaviour
 		pathSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		jumpSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		moveSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		aiHorizMoveSliderTab.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		cameraBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		saveBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		loadBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
@@ -110,6 +112,7 @@ public class LevelDesignTIME : MonoBehaviour
 			pathSliderGroup.SetActive(false);
 			jumpSliderGroup.SetActive(false);
 			moveSliderGroup.SetActive(false);
+			aiHorizMoveSliderGroup.SetActive(false);
 			
 			Pair<GameObject, GameObject> selectedObject;
 			if(foregroundObjectPresent)
@@ -143,7 +146,7 @@ public class LevelDesignTIME : MonoBehaviour
 					lastObjectSelected = selectedObject;
 
 					// Set slider tab to correct position
-					float xpos = ((1f - (p.pathPlaybackTimeInSeconds - 1f) / 8f) * 5.6f) - 2.8f;
+					float xpos = (((p.pathSpeed - 1f) / 8f) * 5.6f) - 2.8f;
 					pathSliderTab.transform.localPosition = new Vector3(xpos, pathSliderTab.transform.localPosition.y, 0f);
 				}
 			}
@@ -176,8 +179,162 @@ public class LevelDesignTIME : MonoBehaviour
 					moveSliderTab.transform.localPosition = new Vector3(xpos, moveSliderTab.transform.localPosition.y, 0f);
 				}
 			}
+
+			MoveHorizontalUntilCollision mh = selectedObject.first.GetComponent<MoveHorizontalUntilCollision>();
+			if(mh != null)
+			{
+				aiHorizMoveSliderGroup.SetActive(true);				
+				if(!Mathf.Approximately(mh.speed, 0f))
+				{
+					float xpos = ((mh.speed / 8f) * 5.6f) - 2.8f;
+					aiHorizMoveSliderTab.transform.localPosition = new Vector3(xpos, aiHorizMoveSliderTab.transform.localPosition.y, 0f);
+				}
+			}
         }
     }
+
+	private void handleSliderTouches(Vector2 touchPosition)
+	{
+		if(pathSliderTouchID > -1)
+		{
+			bool found = false;
+			
+			for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+			{
+				if(touchManager.ActiveTouches[i].Id == pathSliderTouchID)
+				{
+					found = true;
+					
+					float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
+					xpos = Mathf.Max(Mathf.Min(xpos, pathSliderGroup.transform.position.x + SLIDER_MAX_X), pathSliderGroup.transform.position.x + SLIDER_MIN_X);
+					
+					pathSliderTab.transform.position = new Vector3(xpos, pathSliderTab.transform.position.y, pathSliderTab.transform.position.z);
+					
+					float newPathSpeed = ((pathSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 1f;
+					Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+					if(selectedObject != null)
+					{
+						PathFollowing p = selectedObject.first.GetComponent<PathFollowing>();
+						if (p != null)
+						{
+							p.pathSpeed = newPathSpeed;
+						}
+					}
+					break;
+				}
+			}
+			
+			if(!found)
+			{
+				pathSliderTouchID = -1;
+			}
+		}
+		
+		if(jumpSliderTouchID > -1)
+		{
+			bool found = false;
+			
+			for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+			{
+				if(touchManager.ActiveTouches[i].Id == jumpSliderTouchID)
+				{
+					found = true;
+					
+					float ypos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).y;
+					ypos = Mathf.Max(Mathf.Min(ypos, jumpSliderGroup.transform.position.y + SLIDER_MAX_X), jumpSliderGroup.transform.position.y + SLIDER_MIN_X);
+					
+					jumpSliderTab.transform.position = new Vector3(jumpSliderTab.transform.position.x, ypos, jumpSliderTab.transform.position.z);
+					
+					float newJumpBurst = ((jumpSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
+					Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+					if(selectedObject != null)
+					{
+						Jump j = selectedObject.first.GetComponent<Jump>();
+						if (j != null)
+						{
+							j.burst = newJumpBurst;
+						}
+					}
+					break;
+				}
+			}
+			
+			if(!found)
+			{
+				jumpSliderTouchID = -1;
+			}
+		}
+		
+		if(moveSliderTouchID > -1)
+		{
+			bool found = false;
+			
+			for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+			{
+				if(touchManager.ActiveTouches[i].Id == moveSliderTouchID)
+				{
+					found = true;
+					
+					float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
+					xpos = Mathf.Max(Mathf.Min(xpos, moveSliderGroup.transform.position.x + SLIDER_MAX_X), moveSliderGroup.transform.position.x + SLIDER_MIN_X);
+					
+					moveSliderTab.transform.position = new Vector3(xpos, moveSliderTab.transform.position.y, moveSliderTab.transform.position.z);
+					
+					float newMoveSpeed = ((moveSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
+					Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+					if(selectedObject != null)
+					{
+						Move m = selectedObject.first.GetComponent<Move>();
+						if (m != null)
+						{
+							m.setMaxSpeed(newMoveSpeed);
+						}
+					}
+					break;
+				}
+			}
+			
+			if(!found)
+			{
+				moveSliderTouchID = -1;
+			}
+		}
+		
+		if(aiHorizMoveSliderTouchID > -1)
+		{
+			bool found = false;
+			
+			for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
+			{
+				if(touchManager.ActiveTouches[i].Id == aiHorizMoveSliderTouchID)
+				{
+					found = true;
+					
+					float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
+					xpos = Mathf.Max(Mathf.Min(xpos, aiHorizMoveSliderGroup.transform.position.x + SLIDER_MAX_X), aiHorizMoveSliderGroup.transform.position.x + SLIDER_MIN_X);
+					
+					aiHorizMoveSliderTab.transform.position = new Vector3(xpos, aiHorizMoveSliderTab.transform.position.y, aiHorizMoveSliderTab.transform.position.z);
+					
+					float newMoveSpeed = ((aiHorizMoveSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f;
+					Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
+					if(selectedObject != null)
+					{
+						MoveHorizontalUntilCollision mh = selectedObject.first.GetComponent<MoveHorizontalUntilCollision>();
+						if (mh != null)
+						{
+							mh.speed = newMoveSpeed;
+						}
+					}
+					break;
+				}
+			}
+			
+			if(!found)
+			{
+				moveSliderTouchID = -1;
+			}
+		}
+	}
 
 	// Update is called once per frame
 	void Update ()
@@ -189,111 +346,7 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[0].Position);
 
-			if(pathSliderTouchID > -1)
-			{
-				bool found = false;
-
-				for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
-				{
-					if(touchManager.ActiveTouches[i].Id == pathSliderTouchID)
-					{
-						found = true;
-
-						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
-						xpos = Mathf.Max(Mathf.Min(xpos, pathSliderGroup.transform.position.x + SLIDER_MAX_X), pathSliderGroup.transform.position.x + SLIDER_MIN_X);
-
-						pathSliderTab.transform.position = new Vector3(xpos, pathSliderTab.transform.position.y, pathSliderTab.transform.position.z);
-
-						float newPlaybackTimeSec = (1 - (pathSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 1f;
-						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
-						if(selectedObject != null)
-						{
-							PathFollowing p = selectedObject.first.GetComponent<PathFollowing>();
-							if (p != null)
-							{
-								p.pathPlaybackTimeInSeconds = newPlaybackTimeSec;
-								p.currentPathPlayBackTime = 0f;
-							}
-						}
-						break;
-					}
-				}
-				
-				if(!found)
-				{
-					pathSliderTouchID = -1;
-				}
-			}
-
-			if(jumpSliderTouchID > -1)
-			{
-				bool found = false;
-				
-				for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
-				{
-					if(touchManager.ActiveTouches[i].Id == jumpSliderTouchID)
-					{
-						found = true;
-						
-						float ypos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).y;
-						ypos = Mathf.Max(Mathf.Min(ypos, jumpSliderGroup.transform.position.y + SLIDER_MAX_X), jumpSliderGroup.transform.position.y + SLIDER_MIN_X);
-						
-						jumpSliderTab.transform.position = new Vector3(jumpSliderTab.transform.position.x, ypos, jumpSliderTab.transform.position.z);
-						
-						float newJumpBurst = ((jumpSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
-						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
-						if(selectedObject != null)
-						{
-							Jump j = selectedObject.first.GetComponent<Jump>();
-							if (j != null)
-							{
-								j.burst = newJumpBurst;
-							}
-						}
-						break;
-					}
-				}
-				
-				if(!found)
-				{
-					jumpSliderTouchID = -1;
-				}
-			}
-
-			if(moveSliderTouchID > -1)
-			{
-				bool found = false;
-				
-				for(int i = 0; i < touchManager.ActiveTouches.Count; i++)
-				{
-					if(touchManager.ActiveTouches[i].Id == moveSliderTouchID)
-					{
-						found = true;
-						
-						float xpos = Camera.main.ScreenToWorldPoint(touchManager.ActiveTouches[i].Position).x;
-						xpos = Mathf.Max(Mathf.Min(xpos, moveSliderGroup.transform.position.x + SLIDER_MAX_X), moveSliderGroup.transform.position.x + SLIDER_MIN_X);
-						
-						moveSliderTab.transform.position = new Vector3(xpos, moveSliderTab.transform.position.y, moveSliderTab.transform.position.z);
-						
-						float newMoveSpeed = ((moveSliderTab.transform.localPosition.x + 2.8f) / 5.6f) * 8f + 2f;
-						Pair<GameObject, GameObject> selectedObject = levelManager.getObjectAtPosition(touchPosition);
-						if(selectedObject != null)
-						{
-							Move m = selectedObject.first.GetComponent<Move>();
-							if (m != null)
-							{
-								m.setMaxSpeed(newMoveSpeed);
-							}
-						}
-						break;
-					}
-				}
-				
-				if(!found)
-				{
-					moveSliderTouchID = -1;
-				}
-			}
+			handleSliderTouches(touchPosition);
 
 			if(!removed)
 			{
@@ -340,15 +393,18 @@ public class LevelDesignTIME : MonoBehaviour
 					}
 				}
 
+				float x = 0.2f * Mathf.Round(touchPosition.x / 0.2f);
+				float y = 0.2f * Mathf.Round(touchPosition.y / 0.2f);
+
 				if(draggingObject != null)
 				{
-					draggingObject.first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
-					draggingObject.second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
+					draggingObject.first.transform.position = new Vector3(x, y + LevelManager.SCREEN_GAP, 1.0f);
+					draggingObject.second.transform.position = new Vector3(x, y, 1.0f);
 				}
 				else if(activeKey != "")
 				{
-					database[activeKey].first.transform.position = new Vector3(touchPosition.x, touchPosition.y + LevelManager.SCREEN_GAP, 1.0f);
-					database[activeKey].second.transform.position = new Vector3(touchPosition.x, touchPosition.y, 1.0f);
+					database[activeKey].first.transform.position = new Vector3(x, y + LevelManager.SCREEN_GAP, 1.0f);
+					database[activeKey].second.transform.position = new Vector3(x, y, 1.0f);
 				}
 				UpdatePlacementUI(touchPosition);
 			}
@@ -373,7 +429,8 @@ public class LevelDesignTIME : MonoBehaviour
 		    (database[activeKey].first.tag != "Background" && !levelManager.isObjectAtPosition(position)) || 
 		    ignoreExisting)
 		{
-			levelManager.placeObject(position, database[activeKey].first, database[activeKey].second, this.transform);
+			Vector2 discretePos = new Vector2(0.2f * Mathf.Round(position.x / 0.2f), 0.2f * Mathf.Round(position.y / 0.2f));
+			levelManager.placeObject(discretePos, database[activeKey].first, database[activeKey].second, this.transform);
 		}
 		else
 		{
@@ -425,11 +482,9 @@ public class LevelDesignTIME : MonoBehaviour
 			activeKey = "";
 		}
 
-		if(database.ContainsKey(key))
-		{
-			activeKey = key;
-		}
-		else
+		activeKey = key;
+
+		if(!database.ContainsKey(activeKey))
 		{
 			string url = "http://" + databaseAddress + "/playtime/getComponents.php";
 			
@@ -457,18 +512,10 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else
 		{
-			if(fromReader)
-			{
-				if(activeKey != "")
-				{
-					database[activeKey].first.SetActive(false);
-					database[activeKey].second.SetActive(false);
-				}
-				activeKey = rfidKey;
-			}
-
 			Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>();
-
+			p.first.SetActive(false);
+			p.second.SetActive(false);
+			
 			for(int i = 0; i < results.Length; i++)
 			{
 				print(results[i]);
@@ -479,8 +526,6 @@ public class LevelDesignTIME : MonoBehaviour
 				yield return StartCoroutine(addComponentByName(p.first, p.second, vals[1], vals[2], vals[3], vals[4], vals[5], vals[6]));
 			}
 
-			p.first.SetActive(false);
-			p.second.SetActive(false);
 			database.Add(rfidKey, p);
 		}
 	}
@@ -606,28 +651,13 @@ public class LevelDesignTIME : MonoBehaviour
 
 			Health h = go.AddComponent<Health>();
 			Int32.TryParse(data1, out h.maxHP);
-			h.enemyTag = data2;
+			Int32.TryParse(data2, out h.startHP);
 			Int32.TryParse(data3, out h.directions);
 			int deathAction;
 			if(Int32.TryParse(data4, out deathAction))
 			{
 				h.setDeathAction(deathAction);
 			}
-		}
-			break;
-		case "Damage":
-		{
-			BoxCollider2D c = null;
-			c = go.GetComponent<BoxCollider2D>();
-			
-			if(c == null)
-			{
-				c = go.AddComponent<BoxCollider2D>();
-			}
-			
-			Damage d = go.AddComponent<Damage>();
-			Int32.TryParse(data1, out d.dmg);
-			Int32.TryParse(data2, out d.directions);
 		}
 			break;
 		case "Resize":
@@ -645,6 +675,25 @@ public class LevelDesignTIME : MonoBehaviour
 				ct = go.AddComponent<CollideTrigger>();
 			}
 			CustomAction.ActionTypes a = (CustomAction.ActionTypes)Enum.Parse(typeof(CustomAction.ActionTypes), data1);
+			int directions;
+			Int32.TryParse(data2, out directions);
+
+			string[] delimiters = {"|"};
+			string[] tags = data3.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+			List<String> includedTags = new List<String>(), excludedTags = new List<String>();
+			for(int i = 0; i < tags.Length; i++)
+			{
+				if(tags[i].StartsWith("!"))
+				{
+					string tag = tags[i].Substring(1);
+					excludedTags.Add(tag);
+				}
+				else
+				{
+					includedTags.Add(tags[i]);
+				}
+			}
+
 			switch(a)
 			{
 			case CustomAction.ActionTypes.Spawn:
@@ -669,9 +718,8 @@ public class LevelDesignTIME : MonoBehaviour
 				int spawnCount = 0;
 				Int32.TryParse(data5, out spawnCount);
 				s.setMaxSpawnCount(spawnCount);
-				int directions;
-				Int32.TryParse(data2, out directions);
-				s.targetTag = data3;
+				s.includedTags = includedTags;
+				s.excludedTags = excludedTags;
 				ct.actions.Add(s);
 				ct.directions.Add(directions);
 			}
@@ -679,30 +727,170 @@ public class LevelDesignTIME : MonoBehaviour
 			case CustomAction.ActionTypes.Despawn:
 			{
 				Despawn d = go.AddComponent<Despawn>();
-				int directions;
-				Int32.TryParse(data2, out directions);
-				d.targetTag = data3;
+				d.includedTags = includedTags;
+				d.excludedTags = excludedTags;
 				ct.actions.Add(d);
 				ct.directions.Add(directions);
 			}
 				break; 
 			case CustomAction.ActionTypes.Transfigure:
 			{
-				Transfigure t = go.AddComponent<Transfigure>();
-				int directions;
-				Int32.TryParse(data2, out directions);
-				t.targetAnimControllerName = data4;
+				Transfigure t = go.GetComponent<Transfigure>();
+				if(t == null)
+				{
+					t = go.AddComponent<Transfigure>();
+				}
 				bool reversible;
 				Boolean.TryParse(data5, out reversible);
-				t.reversible = reversible;
-				t.targetTag = data3;
+				t.addTargetAnimControllerAndTags(data4, includedTags, excludedTags, reversible, ct.actions.Count);
 				ct.actions.Add(t);
+				ct.directions.Add(directions);
+			}
+				break;
+			case CustomAction.ActionTypes.DespawnOther:
+			{
+				DespawnOther dOther = go.AddComponent<DespawnOther>();
+				dOther.includedTags = includedTags;
+				dOther.excludedTags = excludedTags;
+				ct.actions.Add(dOther);
+				ct.directions.Add(directions);
+			}
+				break;
+			case CustomAction.ActionTypes.RespawnOther:
+			{
+				RespawnOther rOther = go.AddComponent<RespawnOther>();
+				rOther.includedTags = includedTags;
+				rOther.excludedTags = excludedTags;
+				ct.actions.Add(rOther);
+				ct.directions.Add(directions);
+			}
+				break;
+			case CustomAction.ActionTypes.Damage:
+			{
+				Damage d = go.AddComponent<Damage>();
+				d.includedTags = includedTags;
+				d.excludedTags = excludedTags;
+				Int32.TryParse(data4, out d.dmg);
+				ct.actions.Add(d);
 				ct.directions.Add(directions);
 			}
 				break;
 			default:
 				break;
 			}
+		}
+			break;
+		case "TimeTrigger":
+		{
+			TimeTrigger tt = go.GetComponent<TimeTrigger>();
+			if(tt == null)
+			{
+				tt = go.AddComponent<TimeTrigger>();
+			}
+			CustomAction.ActionTypes a = (CustomAction.ActionTypes)Enum.Parse(typeof(CustomAction.ActionTypes), data1);
+			float time;
+			float.TryParse(data2, out time);
+			bool repeats = false;
+			bool.TryParse(data3, out repeats);
+			
+			switch(a)
+			{
+			case CustomAction.ActionTypes.Spawn:
+			{
+				Spawn s = go.AddComponent<Spawn>();
+				string rfidKey = data4;
+				
+				if(database.ContainsKey(rfidKey))
+				{
+					s.toSpawn = database[rfidKey].first;
+				}
+				else
+				{
+					string url = "http://" + databaseAddress + "/playtime/getComponents.php";
+					yield return StartCoroutine(pollDatabase(url, rfidKey, false));
+					if(database.ContainsKey(rfidKey))
+					{
+						s.toSpawn = database[rfidKey].first;
+					}
+				}
+				
+				int spawnCount = 0;
+				Int32.TryParse(data5, out spawnCount);
+				s.setMaxSpawnCount(spawnCount);
+				tt.actions.Add(s);
+				tt.originalTimes.Add(time);
+				tt.repeats.Add(repeats);
+			}
+				break;
+			case CustomAction.ActionTypes.Despawn:
+			{
+				Despawn d = go.AddComponent<Despawn>();
+				tt.actions.Add(d);
+				tt.originalTimes.Add(time);
+				tt.repeats.Add(repeats);
+			}
+				break; 
+			case CustomAction.ActionTypes.Transfigure:
+			{
+				Transfigure t = go.GetComponent<Transfigure>();
+				if(t == null)
+				{
+					t = go.AddComponent<Transfigure>();
+				}
+				bool reversible;
+				Boolean.TryParse(data5, out reversible);
+				List<string> tags = new List<string>();
+				t.addTargetAnimControllerAndTags(data4, tags, tags, reversible, tt.actions.Count);
+				tt.actions.Add(t);
+				tt.originalTimes.Add(time);
+				tt.repeats.Add(repeats);
+			}
+				break;
+			case CustomAction.ActionTypes.DespawnOther:
+			{
+				DespawnOther dOther = go.AddComponent<DespawnOther>();
+				tt.actions.Add(dOther);
+				tt.originalTimes.Add(time);
+				tt.repeats.Add(repeats);
+			}
+				break;
+			case CustomAction.ActionTypes.RespawnOther:
+			{
+				RespawnOther rOther = go.AddComponent<RespawnOther>();
+				tt.actions.Add(rOther);
+				tt.originalTimes.Add(time);
+				tt.repeats.Add(repeats);
+			}
+				break;
+			case CustomAction.ActionTypes.Damage:
+			{
+				Damage d = go.AddComponent<Damage>();
+				Int32.TryParse(data4, out d.dmg);
+				tt.actions.Add(d);
+				tt.originalTimes.Add(time);
+				tt.repeats.Add(repeats);
+			}
+				break;
+			}
+		}
+			break;
+		case "Invisible":
+		{
+			SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
+			if(sr != null)
+			{
+				sr.enabled = false;
+			}
+		}
+			break;
+		case "MoveHorizontalUntilCollision":
+		{
+			MoveHorizontalUntilCollision m = go.AddComponent<MoveHorizontalUntilCollision>();
+			List<String> ignoredTags;
+			string[] delimiters = {"|"};
+			string[] tags = data1.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+			ignoredTags = new List<string>(tags);
+			m.tagsToIgnore = ignoredTags;
 		}
 			break;
 		default:
@@ -800,6 +988,10 @@ public class LevelDesignTIME : MonoBehaviour
 		else if(s.name.Equals(moveSliderTab.name))
 		{
 			moveSliderTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
+		}
+		else if(s.name.Equals(aiHorizMoveSliderTab.name))
+		{
+			aiHorizMoveSliderTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
 		}
 		else if(s.name.Equals(resetBtn.name))
 		{

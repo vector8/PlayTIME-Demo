@@ -1,17 +1,37 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+
+public class TargetAnimControllerAndTags
+{
+	public RuntimeAnimatorController targetAnimController;
+	public List<string> includedTags;
+	public List<string> excludedTags;
+	public bool done;
+	public bool reversible;
+	public int id;
+
+	public bool isValidTag(string tag)
+	{
+		if(includedTags.Count > 0)
+		{
+			return includedTags.Contains(tag) && !excludedTags.Contains(tag);
+		}
+		else
+		{
+			return !excludedTags.Contains(tag);
+		}
+	}
+}
 
 public class Transfigure : CustomAction
 {
-	public string targetAnimControllerName;
-	public bool reversible;
-	public string targetTag;
+	public List<TargetAnimControllerAndTags> targetAndTags = new List<TargetAnimControllerAndTags>();
 
 	private RuntimeAnimatorController originalAnimController = null;
-	private RuntimeAnimatorController targetAnimController = null;
-	private bool done = false;
 	private SpriteRenderer sr;
 	private BoxCollider2D bc;
+	private Animator anim;
 
 	void Update()
 	{
@@ -30,35 +50,37 @@ public class Transfigure : CustomAction
 		}
 	}
 
-	public override void run(GameObject other)
+	public override void initialize()
 	{
-		if((!done || reversible) && other.tag.Equals(targetTag))
+		anim = gameObject.GetComponent<Animator>();
+		if(anim == null)
 		{
-			Animator anim = gameObject.GetComponent<Animator>();
-			if(anim == null)
-			{
-				anim = gameObject.AddComponent<Animator>();
-			}
-			else if(originalAnimController == null)
-			{
-				originalAnimController = anim.runtimeAnimatorController;
-			}
+			anim = gameObject.AddComponent<Animator>();
+		}
+		
+		if(originalAnimController == null)
+		{
+			originalAnimController = anim.runtimeAnimatorController;
+		}
+	}
 
-			if(targetAnimController == null)
+	public override void run(GameObject other, int id)
+	{
+		for(int i = 0; i < targetAndTags.Count; i++)
+		{
+			if(targetAndTags[i].id == id && ((!targetAndTags[i].done || targetAndTags[i].reversible) && targetAndTags[i].isValidTag(other.tag)))
 			{
-				targetAnimController = Resources.Load<RuntimeAnimatorController>(targetAnimControllerName);
+				if(!targetAndTags[i].done)
+				{
+					anim.runtimeAnimatorController = targetAndTags[i].targetAnimController;
+				}
+				else
+				{
+					anim.runtimeAnimatorController = originalAnimController;
+				}
+				
+				targetAndTags[i].done = !targetAndTags[i].done;
 			}
-
-			if(!done)
-			{
-				anim.runtimeAnimatorController = targetAnimController;
-			}
-			else
-			{
-				anim.runtimeAnimatorController = originalAnimController;
-			}
-
-			done = !done;
 		}
 	}
 
@@ -66,9 +88,23 @@ public class Transfigure : CustomAction
 	{
 		if(originalAnimController != null)
 		{
-			Animator anim = gameObject.GetComponent<Animator>();
 			anim.runtimeAnimatorController = originalAnimController;
-			done = false;
+			foreach(TargetAnimControllerAndTags t in targetAndTags)
+			{
+				t.done = false;
+			}
 		}
+	}
+
+	public void addTargetAnimControllerAndTags(string targetAnimControllerName, List<string> includedTags, List<string> excludedTags, bool reversible, int id)
+	{
+		TargetAnimControllerAndTags t = new TargetAnimControllerAndTags();
+		t.targetAnimController = Resources.Load<RuntimeAnimatorController>(targetAnimControllerName);
+		t.includedTags = new List<string>(includedTags);
+		t.excludedTags = new List<string>(excludedTags);
+		t.reversible = reversible;
+		t.id = id;
+		t.done = false;
+		targetAndTags.Add(t);
 	}
 }

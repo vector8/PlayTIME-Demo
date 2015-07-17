@@ -25,6 +25,14 @@ public class CollideTrigger : MonoBehaviour
 		sideAngle = 90.0f - topAngle;
 	}
 
+	public void initialize()
+	{
+		for(int i = 0; i < actions.Count; i++)
+		{
+			actions[i].initialize();
+		}
+	}
+
 	public void reset() 
 	{
 		for(int i = 0; i < actions.Count; i++)
@@ -44,7 +52,7 @@ public class CollideTrigger : MonoBehaviour
 			    Vector2.Angle(v, -transform.up) <= topAngle && directionsInclude(directions[i], CollideDirections.Bottom) ||
 			    Vector2.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions[i], CollideDirections.Left))
 			{
-				actions[i].run(coll.gameObject);
+				actions[i].run(coll.gameObject, i);
 			}
 		}
 	}

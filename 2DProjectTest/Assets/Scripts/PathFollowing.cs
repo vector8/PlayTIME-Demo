@@ -23,12 +23,11 @@ public class PathFollowing : MonoBehaviour
 
     public PathState currentState = PathState.Drawing;
 
-    public float minDist = 0.1f;   // The minimum distance a new point has to be from the previous point to be added to the pathPoint list
+    public float minDist = 0.4f;   // The minimum distance a new point has to be from the previous point to be added to the pathPoint list
 
     private int currentPoint = 0;   // Index of point this gameobject is closest to on the path
 
-    public float pathPlaybackTimeInSeconds = 5.0f;  // Time it takes to traverse through the path, in seconds
-    public float currentPathPlayBackTime = 0.0f;
+    public float pathSpeed = 5.0f;  // Speed to traverse through the path
 
     public bool movableObject = false;  // Does this game object move along the path? Set to true if it does
 
@@ -56,7 +55,7 @@ public class PathFollowing : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
     {
-		if (Input.GetKey(KeyCode.I) || (int) (Input.GetAxisRaw ("Horizontal")) != 0 || (int) (Input.GetAxisRaw ("Vertical")) != 0)
+		if (currentState != PathState.Playing && (Input.GetKey(KeyCode.I) || (int) (Input.GetAxisRaw ("Horizontal")) != 0 || (int) (Input.GetAxisRaw ("Vertical")) != 0))
 		{
 			setStateToPlaying();
 		}
@@ -69,52 +68,85 @@ public class PathFollowing : MonoBehaviour
         {
             Vector3 p1, p2;
             float tStep, t1, t2, u;
-            tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count - 1));
+            //tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count - 1));
 
             if (movingForward)
             {
-                currentPathPlayBackTime += Time.deltaTime;
+//                currentPathPlayBackTime += Time.deltaTime;
+//
+//                if (currentPathPlayBackTime >= pathPlaybackTimeInSeconds)
+//                {
+//                    movingForward = !movingForward;
+//                    currentPathPlayBackTime = pathPlaybackTimeInSeconds;
+//                    return; // avoid array out of range
+//                }
+//
+//                currentPoint = (int)Mathf.Floor(currentPathPlayBackTime / tStep);
 
-                if (currentPathPlayBackTime >= pathPlaybackTimeInSeconds)
-                {
-                    movingForward = !movingForward;
-                    currentPathPlayBackTime = pathPlaybackTimeInSeconds;
-                    return; // avoid array out of range
-                }
-
-                currentPoint = (int)Mathf.Floor(currentPathPlayBackTime / tStep);
-
-                t1 = currentPoint * tStep;
-                t2 = (currentPoint + 1) * tStep;
+//                t1 = currentPoint * tStep;
+//                t2 = (currentPoint + 1) * tStep;
                 p1 = pathPoints[currentPoint];
                 p2 = pathPoints[currentPoint + 1];
-
-                u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
-
-                transform.position = Vector3.Lerp(p1, p2, u);
             }
             else
             {
-                currentPathPlayBackTime -= Time.deltaTime;
+//                currentPathPlayBackTime -= Time.deltaTime;
+//
+//                if (currentPathPlayBackTime <= 0.0f)
+//                {
+//                    movingForward = !movingForward;
+//                    currentPathPlayBackTime = 0.0f;
+//                    return;
+//                }
+//
+//                currentPoint = (int)Mathf.Ceil(currentPathPlayBackTime / tStep);
 
-                if (currentPathPlayBackTime <= 0.0f)
-                {
-                    movingForward = !movingForward;
-                    currentPathPlayBackTime = 0.0f;
-                    return;
-                }
-
-                currentPoint = (int)Mathf.Ceil(currentPathPlayBackTime / tStep);
-
-                t1 = currentPoint * tStep;
-                t2 = (currentPoint - 1) * tStep;
+//                t1 = currentPoint * tStep;
+//                t2 = (currentPoint - 1) * tStep;
                 p1 = pathPoints[currentPoint];
                 p2 = pathPoints[currentPoint - 1]; 
-
-                u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
             }
 
-            transform.position = Vector3.Lerp(p1, p2, u);
+//			u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
+
+			Vector3 position;
+
+			Rigidbody2D rb = gameObject.GetComponent<Rigidbody2D>();
+			if(rb != null && !rb.isKinematic)
+			{
+				p2 = new Vector3(p2.x, transform.position.y, p2.z);
+			}
+				
+			position = Vector3.MoveTowards(transform.position, p2, Time.deltaTime * pathSpeed);
+       		transform.position = position;
+			
+			if((position - p2).magnitude < 0.05f)
+			{
+				if(movingForward)
+				{
+					if(currentPoint < pathPoints.Count - 1)
+					{
+						currentPoint++;
+					}
+
+					if(currentPoint == pathPoints.Count - 1)
+					{
+						movingForward = !movingForward;
+					}
+				}
+				else
+				{
+					if(currentPoint > 0)
+					{
+						currentPoint--;
+					}
+
+					if(currentPoint == 0)
+					{
+						movingForward = !movingForward;
+					}
+				}
+			}
             //Debug.Log("t1 = " + t1 + " t2 = " + t2 + " u = " + u + " time = " + currentPathPlayBackTime);
         }
         else if(pathRendererParent.activeSelf)
@@ -207,7 +239,6 @@ public class PathFollowing : MonoBehaviour
 	public PathFollowing setStateToIdle()
 	{
 		currentState = PathState.Idle;
-		currentPathPlayBackTime = 0;
 		currentPoint = 0;
 		
 		Animator anim = GetComponent<Animator>();
@@ -222,7 +253,6 @@ public class PathFollowing : MonoBehaviour
 	public PathFollowing setStateToPlaying()
 	{
 		currentState = PathState.Playing;
-		currentPathPlayBackTime = 0;
 		currentPoint = 0;
 
 		Animator anim = GetComponent<Animator>();

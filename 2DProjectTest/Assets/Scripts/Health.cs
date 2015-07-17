@@ -5,8 +5,7 @@ using System.Linq;
 
 public class Health : MonoBehaviour 
 {
-	public int hp, maxHP;
-	public string enemyTag;
+	public int hp, maxHP, startHP;
 	public int directions;
 
 	public enum DeathActions
@@ -36,7 +35,7 @@ public class Health : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
-		hp = maxHP;
+		hp = startHP;
 
 		Vector2 size = GetComponent<BoxCollider2D>().size;
 		size = Vector2.Scale(size, (Vector2)transform.localScale);
@@ -54,11 +53,11 @@ public class Health : MonoBehaviour
 			case DeathActions.Despawn:
 				// De-activate this object, it will re-activate when the Reset button is pressed.
 				gameObject.SetActive(false);
-				hp = maxHP;
+				hp = startHP;
 				break;
 			case DeathActions.Respawn:
 				LevelManager.instance.revertObject(gameObject);
-				hp = maxHP;
+				hp = startHP;
 				break;
 			case DeathActions.GameOver:
 				// End the game or something.. prolly thru LevelManager
@@ -77,25 +76,28 @@ public class Health : MonoBehaviour
 		}
 	}
 
-	void OnCollisionEnter2D(Collision2D coll)
+	public void receiveDamage(GameObject other, int dmg)
 	{
-		if(damageCooldownTimer <= 0 && coll.gameObject.tag == enemyTag)
+		if(damageCooldownTimer <= 0)
 		{
-			Damage d = coll.gameObject.GetComponent<Damage>();
-			if(d != null)
-			{
-				Vector2 v = (Vector2)(coll.gameObject.transform.position - transform.position);
+			Vector2 v = (Vector2)(other.transform.position - transform.position);
 
-				if (Vector2.Angle(v, transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Top) && directionsInclude(d.directions, DamageDirections.Bottom) ||
-				    Vector2.Angle(v, transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Right) && directionsInclude(d.directions, DamageDirections.Left) ||
-				    Vector2.Angle(v, -transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Bottom) && directionsInclude(d.directions, DamageDirections.Top) ||
-				    Vector2.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Left) && directionsInclude(d.directions, DamageDirections.Right))
+			if (Vector2.Angle(v, transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Top) ||
+			    Vector2.Angle(v, transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Right) ||
+			    Vector2.Angle(v, -transform.up) <= topAngle && directionsInclude(directions, DamageDirections.Bottom) ||
+			    Vector2.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Left))
+			{
+				hp -= dmg;
+				damageCooldownTimer = DAMAGE_COOLDOWN;
+				if(hp < 0)
 				{
-					hp -= d.dmg; 
-					damageCooldownTimer = DAMAGE_COOLDOWN;
+					hp = 0;
+				}
+				else if(hp > maxHP)
+				{
+					hp = maxHP;
 				}
 			}
-
 		}
 	}
 
