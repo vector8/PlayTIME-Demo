@@ -32,6 +32,73 @@ public class LevelManager
 
 	private List<GameObject> spawnedObjects = new List<GameObject>();
 
+	private void specialPlacementLogic(GameObject g, GameObject sg = null, GameObject oldG = null)
+	{
+		if(sg != null)
+		{
+			// Special behaviour for Resize component
+			Resize r = sg.GetComponent<Resize>();
+			if(r != null)
+			{
+				r.nonStatic = g;
+			}
+		}
+			
+		// Special behaviour for CollideTrigger component
+		CollideTrigger ct = g.GetComponent<CollideTrigger>();
+		if(ct != null)
+		{
+			ct.initialize();
+		}
+
+		if(oldG != null)
+		{
+			Transfigure oldT = oldG.GetComponent<Transfigure>();
+			if(oldT != null)
+			{
+				Transfigure t = g.GetComponent<Transfigure>();
+				t.targetAndTags = new List<TargetAnimControllerAndTags>(oldT.targetAndTags);
+			}
+		}
+
+		TimeTrigger tt = g.GetComponent<TimeTrigger>();
+		if(tt != null)
+		{
+			tt.initialize();
+		}
+	}
+
+	private void specialRevertLogic(GameObject g, GameObject sg = null)
+	{
+		if(sg != null)
+		{
+		}
+		
+		PathFollowing p = g.GetComponent<PathFollowing>();
+		if(p != null)
+		{
+			p.setStateToIdle();
+		}
+
+		CollideTrigger ct = g.GetComponent<CollideTrigger>();
+		if(ct != null)
+		{
+			ct.reset();
+		}
+		
+		TimeTrigger tt = g.GetComponent<TimeTrigger>();
+		if(tt != null)
+		{
+			tt.reset();
+		}
+
+		Health h = g.GetComponent<Health>();
+		if(h != null)
+		{
+			h.hp = h.startHP;
+		}
+	}
+
 	void Awake()
 	{
 		instance = this;
@@ -46,12 +113,7 @@ public class LevelManager
 		sg.transform.position = position;
 		sg.transform.parent = parent;
 
-		// Special behaviour for Resize component
-		Resize r = sg.GetComponent<Resize>();
-		if(r != null)
-		{
-			r.nonStatic = g;
-		}
+		specialPlacementLogic(g, sg, toSpawn);
 
 		// Store placed object
 		if(g.tag == "Background")
@@ -72,6 +134,7 @@ public class LevelManager
 		g.transform.position = position;
 		g.transform.parent = parent;
 		g.SetActive(true);
+		specialPlacementLogic(g);
 		spawnedObjects.Add(g);
 	}
 
@@ -139,6 +202,8 @@ public class LevelManager
 					backgroundPlacedObjects.RemoveAt(i);
 					GameObject.DestroyImmediate(staticBackgroundPlacedObjects[i]);
 					staticBackgroundPlacedObjects.RemoveAt(i);
+
+					specialPlacementLogic(g, sg);
 					
 					backgroundPlacedObjects.Add(g);
 					staticBackgroundPlacedObjects.Add(sg);
@@ -160,6 +225,8 @@ public class LevelManager
 					GameObject.DestroyImmediate(staticPlacedObjects[i]);
 					staticPlacedObjects.RemoveAt(i);
 
+					specialPlacementLogic(g, sg);
+
 					placedObjects.Add(g);
 					staticPlacedObjects.Add(sg);
 					return;
@@ -174,27 +241,14 @@ public class LevelManager
 		{
 			placedObjects[i].SetActive(true);
 			placedObjects[i].transform.position = staticPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
-			PathFollowing p = placedObjects[i].GetComponent<PathFollowing>();
-			if(p != null)
-			{
-				p.setStateToIdle();
-			}
-			CollideTrigger ct = placedObjects[i].GetComponent<CollideTrigger>();
-			if(ct != null)
-			{
-				ct.reset();
-			}
+			specialRevertLogic(placedObjects[i], staticPlacedObjects[i]);
 		}
 
 		for (int i = 0; i < backgroundPlacedObjects.Count; i++)
 		{
 			backgroundPlacedObjects[i].SetActive(true);
 			backgroundPlacedObjects[i].transform.position = staticBackgroundPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
-			PathFollowing p = backgroundPlacedObjects[i].GetComponent<PathFollowing>();
-			if(p != null)
-			{
-				p.setStateToIdle();
-			}
+			specialRevertLogic(backgroundPlacedObjects[i], staticBackgroundPlacedObjects[i]);
 		}
 
 		for(int i = 0; i < spawnedObjects.Count; i++)
@@ -210,6 +264,7 @@ public class LevelManager
 			if(placedObjects[i] == go)
 			{
 				placedObjects[i].transform.position = staticPlacedObjects[i].transform.position + (new Vector3(0f, LevelManager.SCREEN_GAP, 0f));
+				specialRevertLogic(placedObjects[i]);
 				return;
 			}
 		}

@@ -1,18 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Despawn : CustomAction
+public class RespawnOther : CustomAction 
 {
 	public override void run(GameObject other, int id)
 	{
-		if(other == null || isValidTag(other.tag))
+		if(isValidTag(other.tag))
 		{
-			gameObject.SetActive(false);
+			LevelManager.instance.revertObject(other);
 		}
 	}
-
+	
 	public override void reset()
 	{
-		gameObject.SetActive(true);
 	}
 }
