@@ -181,7 +181,7 @@ namespace Completed
 			Instantiate (exit, new Vector3 (columns - 1, 10f + rows - 1, 0f), Quaternion.identity);
 		}
 
-        int lastMouseIdx = 0;
+//        int lastMouseIdx = 0;
 
         // Description:
         // Creates a Vector2 using the x,y from input Vector 3.

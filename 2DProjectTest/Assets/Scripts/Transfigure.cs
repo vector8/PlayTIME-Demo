@@ -64,7 +64,7 @@ public class Transfigure : CustomAction
 		}
 	}
 
-	public override void run(GameObject other, int id)
+	public override void run(GameObject other = null, int id = 0)
 	{
 		for(int i = 0; i < targetAndTags.Count; i++)
 		{

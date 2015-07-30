@@ -66,8 +66,8 @@ public class PathFollowing : MonoBehaviour
         }
         else if (currentState == PathState.Playing && movableObject && pathPoints.Count > 0)
         {
-            Vector3 p1, p2;
-            float tStep, t1, t2, u;
+			Vector3 p;
+//            float tStep, t1, t2, u;
             //tStep = (pathPlaybackTimeInSeconds / (pathPoints.Count - 1));
 
             if (movingForward)
@@ -85,8 +85,8 @@ public class PathFollowing : MonoBehaviour
 
 //                t1 = currentPoint * tStep;
 //                t2 = (currentPoint + 1) * tStep;
-                p1 = pathPoints[currentPoint];
-                p2 = pathPoints[currentPoint + 1];
+//                p1 = pathPoints[currentPoint];
+                p = pathPoints[currentPoint + 1];
             }
             else
             {
@@ -103,8 +103,8 @@ public class PathFollowing : MonoBehaviour
 
 //                t1 = currentPoint * tStep;
 //                t2 = (currentPoint - 1) * tStep;
-                p1 = pathPoints[currentPoint];
-                p2 = pathPoints[currentPoint - 1]; 
+//                p1 = pathPoints[currentPoint];
+                p = pathPoints[currentPoint - 1]; 
             }
 
 //			u = Mathf.Abs(1 - ((t2 - currentPathPlayBackTime) / (t2 - t1)));
@@ -114,13 +114,13 @@ public class PathFollowing : MonoBehaviour
 			Rigidbody2D rb = gameObject.GetComponent<Rigidbody2D>();
 			if(rb != null && !rb.isKinematic)
 			{
-				p2 = new Vector3(p2.x, transform.position.y, p2.z);
+				p = new Vector3(p.x, transform.position.y, p.z);
 			}
 				
-			position = Vector3.MoveTowards(transform.position, p2, Time.deltaTime * pathSpeed);
+			position = Vector3.MoveTowards(transform.position, p, Time.deltaTime * pathSpeed);
        		transform.position = position;
 			
-			if((position - p2).magnitude < 0.05f)
+			if((position - p).magnitude < 0.05f)
 			{
 				if(movingForward)
 				{

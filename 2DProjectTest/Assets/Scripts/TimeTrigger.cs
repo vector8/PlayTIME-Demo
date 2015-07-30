@@ -31,10 +31,11 @@ public class TimeTrigger : MonoBehaviour
 
 	public void initialize()
 	{
-		for(int i = 0; i < actions.Count; i++)
+		times = new List<float>(originalTimes);
+
+		foreach(CustomAction a in actions)
 		{
-			times = new List<float>(originalTimes);
-			actions[i].initialize();
+			a.initialize();
 		}
 	}
 

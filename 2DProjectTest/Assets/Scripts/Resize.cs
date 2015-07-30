@@ -9,10 +9,32 @@ public class Resize : MonoBehaviour
 	public GameObject arrowPrefab;
 	public GameObject nonStatic;
 	public GameObject top, right, bottom, left;
+    public Vector2 originalDimensions = new Vector2(); 
 
 	private ITouchManager touchManager;
-	private Vector4 originalExtents = new Vector4(); 
 	private int topTouchID = -1, rightTouchID = -1, bottomTouchID = -1, leftTouchID = -1;
+
+    private void initialize()
+    {
+        right = GameObject.Instantiate(arrowPrefab);
+        right.transform.parent = gameObject.transform;
+        right.SetActive(true);
+        bottom = GameObject.Instantiate(right);
+        bottom.transform.parent = gameObject.transform;
+        bottom.transform.Rotate(0f, 0f, -90f);
+        left = GameObject.Instantiate(right);
+        left.transform.parent = gameObject.transform;
+        left.transform.Rotate(0f, 0f, -180f);
+        top = GameObject.Instantiate(right);
+        top.transform.parent = gameObject.transform;
+        top.transform.Rotate(0f, 0f, -270f);
+    }
+
+    private void calculateOriginalDimensions()
+    {
+        originalDimensions.x = (right.transform.position.x - left.transform.position.x) / gameObject.transform.localScale.x;
+        originalDimensions.y = (top.transform.position.y - bottom.transform.position.y) / gameObject.transform.localScale.y;
+    }
 
 	// Use this for initialization
 	void Start () 
@@ -21,19 +43,7 @@ public class Resize : MonoBehaviour
 		
 		if(right == null)
 		{
-			print ("instantiating...");
-			right = GameObject.Instantiate(arrowPrefab);
-			right.transform.parent = gameObject.transform;
-			right.SetActive(true);
-			bottom = GameObject.Instantiate(right);
-			bottom.transform.parent = gameObject.transform;
-			bottom.transform.Rotate(0f, 0f, -90f);
-			left = GameObject.Instantiate(right);
-			left.transform.parent = gameObject.transform;
-			left.transform.Rotate(0f, 0f, -180f);
-			top = GameObject.Instantiate(right);
-			top.transform.parent = gameObject.transform;
-			top.transform.Rotate(0f, 0f, -270f);
+            initialize();
 		}
 			
 		SpriteRenderer sr = gameObject.GetComponent<SpriteRenderer>();
@@ -44,30 +54,28 @@ public class Resize : MonoBehaviour
 			position.y = gameObject.transform.position.y;
 			position.z = -5f;
 			right.transform.position = position;
-			originalExtents.x = position.x;
 			position.x = sr.bounds.min.x;
 			position.y = gameObject.transform.position.y;
 			position.z = -5f;
 			left.transform.position = position;
-			originalExtents.z = position.x;
 
 			position = top.transform.position;
 			position.y = sr.bounds.max.y;
 			position.x = gameObject.transform.position.x;
 			position.z = -5f;
 			top.transform.position = position;
-			originalExtents.w = position.y;
 			position.y = sr.bounds.min.y;
 			position.x = gameObject.transform.position.x;
 			position.z = -5f;
 			bottom.transform.position = position;
-			originalExtents.y = position.y;
 		}
 
 		top.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		right.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		bottom.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		left.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+
+        calculateOriginalDimensions();
 	}
 	
 	// Update is called once per frame
@@ -175,17 +183,10 @@ public class Resize : MonoBehaviour
 		   !Mathf.Approximately(xDiffRight, 0f) || !Mathf.Approximately(xDiffLeft, 0f))
 		{
 			Vector3 newScale = new Vector3(1f, 1f, 1f);
-			newScale.x = ((xDiffRight - xDiffLeft) + right.transform.position.x - left.transform.position.x) / (originalExtents.x - originalExtents.z);
-			newScale.y = ((yDiffTop - yDiffBot) + top.transform.position.y - bottom.transform.position.y) / (originalExtents.w - originalExtents.y);
+			newScale.x = ((xDiffRight - xDiffLeft) + right.transform.position.x - left.transform.position.x) / originalDimensions.x;
+			newScale.y = ((yDiffTop - yDiffBot) + top.transform.position.y - bottom.transform.position.y) / originalDimensions.y;
 
-			gameObject.transform.localScale = newScale;
-			newScale = new Vector3(1f / newScale.x, 1f / newScale.y, 1f);
-			right.transform.localScale = newScale;
-			left.transform.localScale = newScale;
-
-			newScale = new Vector3(newScale.y, newScale.x, 1f);
-			top.transform.localScale = newScale;
-			bottom.transform.localScale = newScale;
+            setNewScale(newScale);
 
 			Vector3 newpos = gameObject.transform.position;
 			newpos.x += 0.5f * (xDiffRight + xDiffLeft);
@@ -196,7 +197,6 @@ public class Resize : MonoBehaviour
 			Vector3 pos	= gameObject.transform.position;
 			pos.y += LevelManager.SCREEN_GAP;
 			nonStatic.transform.position = pos;
-			nonStatic.transform.localScale = gameObject.transform.localScale;
 		}
 	}
 
@@ -221,4 +221,23 @@ public class Resize : MonoBehaviour
 			leftTouchID = touchManager.ActiveTouches[touchManager.ActiveTouches.Count - 1].Id;
 		}
 	}
+
+    public void setNewScale(Vector3 newScale)
+    {
+        if (right == null)
+        {
+            initialize();
+        }
+
+        gameObject.transform.localScale = newScale;
+        newScale = new Vector3(1f / newScale.x, 1f / newScale.y, 1f);
+        right.transform.localScale = newScale;
+        left.transform.localScale = newScale;
+
+        newScale = new Vector3(newScale.y, newScale.x, 1f);
+        top.transform.localScale = newScale;
+        bottom.transform.localScale = newScale;
+
+        nonStatic.transform.localScale = gameObject.transform.localScale;
+    }
 }

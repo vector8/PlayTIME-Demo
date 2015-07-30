@@ -19,9 +19,10 @@ public class LevelDesignTIME : MonoBehaviour
     public GameObject PlacementUI;
     public Vector2 PlacementUIOffsetInPixels;
 
-	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, saveBtn, loadBtn;
+	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, saveBtn, loadBtn, snapToGridBtn;
 	public GameObject pathSliderGroup, pathSliderTab, jumpSliderGroup, jumpSliderTab, moveSliderGroup, moveSliderTab, 
 					  aiHorizMoveSliderGroup, aiHorizMoveSliderTab;
+	public SaveLoad saveLoad;
 	public GameObject cameraBtn, cameraPanel, cameraOutline;
 	public GameObject pentaArrow, bottomCamCanvas;
 	
@@ -37,22 +38,23 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private bool removed = false;
 	private bool dragging = false;
-	private bool firstTouch = true;
 	private Pair<GameObject, GameObject> draggingObject = null;
 	//private int lastGridIdx;
 	private string keyToReset = "";
 	private bool shouldResetKey = false;
 
-    private bool previewMode = false;
-	
 	private int pathSliderTouchID = -1, jumpSliderTouchID = -1, moveSliderTouchID = -1, aiHorizMoveSliderTouchID = -1;
 	private const float SLIDER_MAX_X = 1.6455f;
 	private const float SLIDER_MIN_X = -1.6455f;
 
 	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
-	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", "4d004aef92", "4d004ab4ed", "3001ffcc05"};
+	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", 
+		"4d004aef92", "4d004ab4ed", "3001ffcc05", "5e45686e2a", "9f4d96142f"};
 	private int testIndex = -1;
+
+	private const float SNAP_VALUE = 0.2f;
+	private bool snapToGrid = true;
 
 	void Awake()
 	{
@@ -76,6 +78,7 @@ public class LevelDesignTIME : MonoBehaviour
 		cameraBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		saveBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		loadBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
+		snapToGridBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 		bottomCamCanvas.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
 
 		bottomCamCanvas.GetComponent<ReleaseGesture>().Released += buttonReleasedHandler;
@@ -393,9 +396,18 @@ public class LevelDesignTIME : MonoBehaviour
 					}
 				}
 
-				float x = 0.2f * Mathf.Round(touchPosition.x / 0.2f);
-				float y = 0.2f * Mathf.Round(touchPosition.y / 0.2f);
-
+				float x, y;
+				if(snapToGrid)
+				{
+					x = SNAP_VALUE * Mathf.Round(touchPosition.x / SNAP_VALUE);
+					y = SNAP_VALUE * Mathf.Round(touchPosition.y / SNAP_VALUE);
+				}
+				else
+				{
+					x = touchPosition.x;
+					y = touchPosition.y;
+				}
+					
 				if(draggingObject != null)
 				{
 					draggingObject.first.transform.position = new Vector3(x, y + LevelManager.SCREEN_GAP, 1.0f);
@@ -422,15 +434,22 @@ public class LevelDesignTIME : MonoBehaviour
         }
 	}
 
-	public void PlaceObject(Vector2 position, bool ignoreExisting = false)
+	public void PlaceObject(Vector2 position, bool ignoreExisting = false, bool ignoreSnapToGrid = false)
 	{
 		// Check if spot is free
 		if ((database[activeKey].first.tag == "Background" && !levelManager.isBackgroundObjectAtPosition(position)) || 
 		    (database[activeKey].first.tag != "Background" && !levelManager.isObjectAtPosition(position)) || 
 		    ignoreExisting)
 		{
-			Vector2 discretePos = new Vector2(0.2f * Mathf.Round(position.x / 0.2f), 0.2f * Mathf.Round(position.y / 0.2f));
-			levelManager.placeObject(discretePos, database[activeKey].first, database[activeKey].second, this.transform);
+			if(!ignoreSnapToGrid && snapToGrid)
+			{
+				Vector2 discretePos = new Vector2(SNAP_VALUE * Mathf.Round(position.x / SNAP_VALUE), SNAP_VALUE * Mathf.Round(position.y / SNAP_VALUE));
+				levelManager.placeObject(discretePos, database[activeKey].first, database[activeKey].second, this.transform);
+			}
+			else
+			{
+				levelManager.placeObject(position, database[activeKey].first, database[activeKey].second, this.transform);
+			}
 		}
 		else
 		{
@@ -482,16 +501,41 @@ public class LevelDesignTIME : MonoBehaviour
 			activeKey = "";
 		}
 
-		activeKey = key;
-
-		if(!database.ContainsKey(activeKey))
+		if(!database.ContainsKey(key))
 		{
 			string url = "http://" + databaseAddress + "/playtime/getComponents.php";
 			
 			print("fetching key " + key);
-			
-			StartCoroutine(pollDatabase(url, key));
+
+            StartCoroutine(pollDatabase(url, key));
 		}
+        else
+        {
+            activeKey = key;
+        }
+    }
+
+    public IEnumerator rfidFoundCoroutine(string key)
+    {
+        if (activeKey != "")
+        {
+            database[activeKey].first.SetActive(false);
+            database[activeKey].second.SetActive(false);
+            activeKey = "";
+        }
+
+        if (!database.ContainsKey(key))
+        {
+            string url = "http://" + databaseAddress + "/playtime/getComponents.php";
+
+            print("fetching key " + key);
+
+            yield return StartCoroutine(pollDatabase(url, key));
+        }
+        else
+        {
+            activeKey = key;
+        }
     }
 
 	private IEnumerator pollDatabase(string url, string rfidKey, bool fromReader = true)
@@ -513,6 +557,8 @@ public class LevelDesignTIME : MonoBehaviour
 		else
 		{
 			Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>();
+			RFIDKey r = p.second.AddComponent<RFIDKey>();
+			r.rfidKey = rfidKey;
 			p.first.SetActive(false);
 			p.second.SetActive(false);
 			
@@ -527,6 +573,7 @@ public class LevelDesignTIME : MonoBehaviour
 			}
 
 			database.Add(rfidKey, p);
+            activeKey = rfidKey;
 		}
 	}
 
@@ -658,6 +705,7 @@ public class LevelDesignTIME : MonoBehaviour
 			{
 				h.setDeathAction(deathAction);
 			}
+			float.TryParse(data5, out h.deathAnimTime);
 		}
 			break;
 		case "Resize":
@@ -775,6 +823,17 @@ public class LevelDesignTIME : MonoBehaviour
 				ct.directions.Add(directions);
 			}
 				break;
+			case CustomAction.ActionTypes.MoveHoriz:
+			{
+				MoveHorizontalUntilCollision m = go.AddComponent<MoveHorizontalUntilCollision>();
+				m.includedTags = includedTags;
+				m.excludedTags = excludedTags;
+				float.TryParse(data4, out m.speed);
+				m.tagsToIgnore = new List<string>(data5.Split(delimiters, StringSplitOptions.RemoveEmptyEntries));
+				ct.actions.Add(m);
+				ct.directions.Add(directions);
+			}
+				break;
 			default:
 				break;
 			}
@@ -870,6 +929,48 @@ public class LevelDesignTIME : MonoBehaviour
 				tt.originalTimes.Add(time);
 				tt.repeats.Add(repeats);
 			}
+				break;
+			}
+		}
+			break;
+		case "DeathTrigger":
+		{
+			DeathTrigger dt = go.GetComponent<DeathTrigger>();
+			if(dt == null)
+			{
+				dt = go.AddComponent<DeathTrigger>();
+			}
+			CustomAction.ActionTypes a = (CustomAction.ActionTypes)Enum.Parse(typeof(CustomAction.ActionTypes), data1);
+
+			switch(a)
+			{
+			case CustomAction.ActionTypes.Spawn:
+			{
+				Spawn s = go.AddComponent<Spawn>();
+				string rfidKey = data2;
+				
+				if(database.ContainsKey(rfidKey))
+				{
+					s.toSpawn = database[rfidKey].first;
+				}
+				else
+				{
+					string url = "http://" + databaseAddress + "/playtime/getComponents.php";
+					yield return StartCoroutine(pollDatabase(url, rfidKey, false));
+					if(database.ContainsKey(rfidKey))
+					{
+						s.toSpawn = database[rfidKey].first;
+					}
+				}
+				
+				int spawnCount = 0;
+				Int32.TryParse(data3, out spawnCount);
+				s.setMaxSpawnCount(spawnCount);
+				s.spawnUnderParent = true;
+				dt.actions.Add(s);
+			}
+				break;
+			default:
 				break;
 			}
 		}
@@ -1009,14 +1110,20 @@ public class LevelDesignTIME : MonoBehaviour
 		{
 			cameraOutline.SetActive(!cameraOutline.activeSelf);
 			cameraPanel.SetActive(!cameraPanel.activeSelf);
+			snapToGridBtn.GetComponent<Animator>().SetBool("Checked", snapToGrid);
 		}
 		else if(s.name.Equals(saveBtn.name))
 		{
-			SaveLoad.save("savefile1");
+			saveLoad.save("savefile1");
 		}
 		else if(s.name.Equals(loadBtn.name))
 		{
-			SaveLoad.loadGame("savefile1");
+			StartCoroutine(saveLoad.loadGame("savefile1"));
+		}
+		else if(s.name.Equals(snapToGridBtn.name))
+		{
+			snapToGrid = !snapToGrid;
+			snapToGridBtn.GetComponent<Animator>().SetBool("Checked", snapToGrid);
 		}
 		else if(s.name.Equals(bottomCamCanvas.name))
 		{
