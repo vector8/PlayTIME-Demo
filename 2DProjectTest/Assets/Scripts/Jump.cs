@@ -6,6 +6,7 @@ public class Jump : MonoBehaviour
 	public float burst = 8f;
 
 	private bool jumped = false;
+	private bool midJump = false;
 	private bool canJump = true;
 	private float jumpTimer = 0;
 	private const float JUMP_COOLDOWN = 0.5f;
@@ -30,6 +31,13 @@ public class Jump : MonoBehaviour
 			canJump = false;
 			jumpTimer = JUMP_COOLDOWN;
 			animator.SetBool("Jumping", true);
+			animator.SetBool("MidJump", false);
+			midJump = false;
+		}
+		else if(!midJump)
+		{
+			animator.SetBool("MidJump", true);
+			midJump = true;
 		}
 	}
 	
@@ -59,6 +67,7 @@ public class Jump : MonoBehaviour
 					canJump = true;
 					Animator animator = GetComponent<Animator>();
 					animator.SetBool("Jumping", false);
+					animator.SetBool("MidJump", false);
 					return;
 				}
 			}

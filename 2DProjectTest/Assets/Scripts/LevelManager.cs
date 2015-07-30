@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class LevelManager
 {
 	private static LevelManager _instance = null;
+	private List<ICanReset> resetListeners = new List<ICanReset>();
 
 	public static LevelManager instance 
 	{
@@ -24,15 +25,14 @@ public class LevelManager
 
 	public const float SCREEN_GAP = 10000f;
 
-	private List<GameObject> placedObjects = new List<GameObject>();
-	private List<GameObject> staticPlacedObjects = new List<GameObject>();
-
-	private List<GameObject> backgroundPlacedObjects = new List<GameObject>();
-	private List<GameObject> staticBackgroundPlacedObjects = new List<GameObject>();
+	public List<GameObject> placedObjects = new List<GameObject>();
+	public List<GameObject> staticPlacedObjects = new List<GameObject>();
+    public List<GameObject> backgroundPlacedObjects = new List<GameObject>();
+    public List<GameObject> staticBackgroundPlacedObjects = new List<GameObject>();
 
 	private List<GameObject> spawnedObjects = new List<GameObject>();
 
-	private void specialPlacementLogic(GameObject g, GameObject sg = null, GameObject oldG = null)
+	private void specialPlacementLogic(GameObject g, bool spawned, GameObject sg = null, GameObject oldG = null)
 	{
 		if(sg != null)
 		{
@@ -66,6 +66,21 @@ public class LevelManager
 		{
 			tt.initialize();
 		}
+
+		if(!spawned)
+		{
+			MoveHorizontalUntilCollision mh = g.GetComponent<MoveHorizontalUntilCollision>();
+			if(mh != null)
+			{
+				mh.run();
+			}
+		}
+
+		KoopaTroopa kt = g.GetComponent<KoopaTroopa>();
+		if(kt != null)
+		{
+			addResetListener(kt);
+		}
 	}
 
 	private void specialRevertLogic(GameObject g, GameObject sg = null)
@@ -91,11 +106,23 @@ public class LevelManager
 		{
 			tt.reset();
 		}
+		
+		DeathTrigger dt = g.GetComponent<DeathTrigger>();
+		if(dt != null)
+		{
+			dt.reset();
+		}
 
 		Health h = g.GetComponent<Health>();
 		if(h != null)
 		{
 			h.hp = h.startHP;
+		}
+
+		StarPower sp = g.GetComponent<StarPower>();
+		if(sp != null)
+		{
+			sp.reset();
 		}
 	}
 
@@ -113,7 +140,10 @@ public class LevelManager
 		sg.transform.position = position;
 		sg.transform.parent = parent;
 
-		specialPlacementLogic(g, sg, toSpawn);
+        g.SetActive(true);
+        sg.SetActive(true);
+
+		specialPlacementLogic(g, false, sg, toSpawn);
 
 		// Store placed object
 		if(g.tag == "Background")
@@ -134,7 +164,8 @@ public class LevelManager
 		g.transform.position = position;
 		g.transform.parent = parent;
 		g.SetActive(true);
-		specialPlacementLogic(g);
+		g.AddComponent<JustSpawned>();
+		specialPlacementLogic(g, true);
 		spawnedObjects.Add(g);
 	}
 
@@ -203,7 +234,7 @@ public class LevelManager
 					GameObject.DestroyImmediate(staticBackgroundPlacedObjects[i]);
 					staticBackgroundPlacedObjects.RemoveAt(i);
 
-					specialPlacementLogic(g, sg);
+					specialPlacementLogic(g, false, sg);
 					
 					backgroundPlacedObjects.Add(g);
 					staticBackgroundPlacedObjects.Add(sg);
@@ -225,7 +256,7 @@ public class LevelManager
 					GameObject.DestroyImmediate(staticPlacedObjects[i]);
 					staticPlacedObjects.RemoveAt(i);
 
-					specialPlacementLogic(g, sg);
+					specialPlacementLogic(g, false, sg);
 
 					placedObjects.Add(g);
 					staticPlacedObjects.Add(sg);
@@ -254,6 +285,11 @@ public class LevelManager
 		for(int i = 0; i < spawnedObjects.Count; i++)
 		{
 			GameObject.DestroyImmediate(spawnedObjects[i]);
+		}
+
+		foreach(ICanReset r in resetListeners)
+		{
+			r.reset();
 		}
 	}
 
@@ -308,6 +344,20 @@ public class LevelManager
 		
 		return null;
 	}
+
+    public Pair<GameObject, GameObject> getObjectExactlyAtPosition(Vector2 position)
+    {
+        for (int i = 0; i < staticPlacedObjects.Count; i++)
+        {
+            Vector2 checkPos = (Vector2)staticPlacedObjects[i].transform.position;
+            if (checkPos == position)
+            {
+                return new Pair<GameObject, GameObject>(placedObjects[i], staticPlacedObjects[i]);
+            }
+        }
+
+        return null;
+    }
 	
 	public Pair<GameObject, GameObject> getBackgroundObjectAtPosition(Vector2 position)
 	{
@@ -321,4 +371,47 @@ public class LevelManager
 		
 		return null;
 	}
+
+    public Pair<GameObject, GameObject> getBackgroundObjectExactlyAtPosition(Vector2 position)
+    {
+        for (int i = 0; i < staticBackgroundPlacedObjects.Count; i++)
+        {
+            if ((Vector2)staticBackgroundPlacedObjects[i].transform.position == position)
+            {
+                return new Pair<GameObject, GameObject>(backgroundPlacedObjects[i], staticBackgroundPlacedObjects[i]);
+            }
+        }
+
+        return null;
+    }
+
+	public void addResetListener(ICanReset r)
+	{
+		resetListeners.Add(r);
+	}
+
+    public void wipeLevel()
+    {
+        for(int i = 0; i < staticPlacedObjects.Count; i++)
+        {
+            GameObject.DestroyImmediate(staticPlacedObjects[i]);
+            GameObject.DestroyImmediate(placedObjects[i]);
+        }
+        placedObjects.Clear();
+        staticPlacedObjects.Clear();
+
+        for (int i = 0; i < staticBackgroundPlacedObjects.Count; i++)
+        {
+            GameObject.DestroyImmediate(staticBackgroundPlacedObjects[i]);
+            GameObject.DestroyImmediate(backgroundPlacedObjects[i]);
+        }
+        staticBackgroundPlacedObjects.Clear();
+        backgroundPlacedObjects.Clear();
+
+        for (int i = 0; i < spawnedObjects.Count; i++)
+        {
+            GameObject.DestroyImmediate(spawnedObjects[i]);
+        }
+        spawnedObjects.Clear();
+    }
 }

@@ -8,11 +8,20 @@ public class Spawn : CustomAction
 	public int maxSpawnCount;
 	public int currentSpawnCount;
 
-	public override void run(GameObject other, int id)
+	public bool spawnUnderParent = false;
+
+	public override void run(GameObject other = null, int id = 0)
 	{
-		if(toSpawn != null && currentSpawnCount > 0 && isValidTag(other.tag))
+		if(toSpawn != null && currentSpawnCount > 0 && (other == null || isValidTag(other.tag)))
 		{
-			LevelManager.instance.placeSpawnedObject(gameObject.transform.position + new Vector3(0f, 1f), toSpawn, gameObject.transform);
+			if(spawnUnderParent)
+			{
+				LevelManager.instance.placeSpawnedObject(gameObject.transform.position, toSpawn, gameObject.transform.parent);
+			}
+			else
+			{
+				LevelManager.instance.placeSpawnedObject(gameObject.transform.position + new Vector3(0f, 1f), toSpawn, gameObject.transform);
+			}
 			currentSpawnCount--;
 		}
 	}

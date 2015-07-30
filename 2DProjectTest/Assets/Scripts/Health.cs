@@ -7,13 +7,12 @@ public class Health : MonoBehaviour
 {
 	public int hp, maxHP, startHP;
 	public int directions;
+	public float deathAnimTime = 0f;
 
 	public enum DeathActions
 	{
 		Despawn = 0,
-		Respawn = 1,
-		GameOver = 2,
-		Trigger = 3
+		Respawn = 1
 	}
 		
 	private enum DamageDirections
@@ -25,13 +24,15 @@ public class Health : MonoBehaviour
 	}
 
 	public DeathActions da;
+
 	private float damageCooldownTimer;
 	private const float DAMAGE_COOLDOWN = 0.5f;
-
+	private float deathAnimTimer = 0f;
 	private float topAngle, sideAngle;
-
+	private Animator anim;
 	private static DeathActions maxDA = Enum.GetValues(typeof(DeathActions)).Cast<DeathActions>().Max();
 	
+
 	// Use this for initialization
 	void Start () 
 	{
@@ -48,25 +49,48 @@ public class Health : MonoBehaviour
 	{
 		if(hp <= 0)
 		{
-			switch(da)
+			if(deathAnimTimer < deathAnimTime)
 			{
-			case DeathActions.Despawn:
-				// De-activate this object, it will re-activate when the Reset button is pressed.
-				gameObject.SetActive(false);
+				deathAnimTimer += Time.deltaTime;
+			}
+			
+			if(deathAnimTimer >= deathAnimTime)
+			{
 				hp = startHP;
-				break;
-			case DeathActions.Respawn:
-				LevelManager.instance.revertObject(gameObject);
-				hp = startHP;
-				break;
-			case DeathActions.GameOver:
-				// End the game or something.. prolly thru LevelManager
-				break;
-			case DeathActions.Trigger:
-				// I dunno... might have to make an event system for this?
-				break;
-			default:
-				break;
+				deathAnimTimer = 0f;
+
+				switch(da)
+				{
+				case DeathActions.Despawn:
+					// De-activate this object, it will re-activate when the Reset button is pressed.
+					gameObject.SetActive(false);
+					break;
+				case DeathActions.Respawn:
+					LevelManager.instance.revertObject(gameObject);
+					break;
+				default:
+					break;
+				}
+				
+				DeathTrigger dt = GetComponent<DeathTrigger>();
+				if(dt != null)
+				{
+					dt.run();
+				}
+			}
+		}
+		else
+		{
+			if(anim == null)
+			{
+				anim = GetComponent<Animator>();
+			}
+			if(anim != null)
+			{
+				// disable warning in case the bool "dying" does not exist on this gameobject's animator
+				anim.logWarnings = false;
+				anim.SetBool("Dying", false);
+				anim.logWarnings = true;
 			}
 		}
 
@@ -76,7 +100,7 @@ public class Health : MonoBehaviour
 		}
 	}
 
-	public void receiveDamage(GameObject other, int dmg)
+	public bool receiveDamage(GameObject other, int dmg)
 	{
 		if(damageCooldownTimer <= 0)
 		{
@@ -89,16 +113,30 @@ public class Health : MonoBehaviour
 			{
 				hp -= dmg;
 				damageCooldownTimer = DAMAGE_COOLDOWN;
-				if(hp < 0)
+				if(hp <= 0)
 				{
 					hp = 0;
+					if(anim == null)
+					{
+						anim = GetComponent<Animator>();
+					}
+					if(anim != null)
+					{
+#pragma warning disable
+						anim.logWarnings = false;
+						anim.SetBool("Dying", true);
+						anim.logWarnings = true;
+#pragma warning restore
+					}
 				}
 				else if(hp > maxHP)
 				{
 					hp = maxHP;
 				}
+				return true;
 			}
 		}
+		return false;
 	}
 
 	private bool directionsInclude(int directions, DamageDirections collisionDirection)
@@ -109,7 +147,7 @@ public class Health : MonoBehaviour
 
 	public void setDeathAction(int actionID)
 	{
-		if(actionID < (int) maxDA)
+		if(actionID <= (int) maxDA)
 		{
 			da = (DeathActions) actionID;
 		}
