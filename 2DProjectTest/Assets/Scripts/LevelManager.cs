@@ -3,6 +3,14 @@ using System.Collections.Generic;
 
 public class LevelManager
 {
+    public const float SCREEN_GAP = 10000f;
+
+    public List<GameObject> placedObjects = new List<GameObject>();
+    public List<GameObject> staticPlacedObjects = new List<GameObject>();
+    public List<GameObject> backgroundPlacedObjects = new List<GameObject>();
+    public List<GameObject> staticBackgroundPlacedObjects = new List<GameObject>();
+    public bool paused = true;
+
 	private static LevelManager _instance = null;
 	private List<ICanReset> resetListeners = new List<ICanReset>();
 
@@ -23,16 +31,9 @@ public class LevelManager
 		}
 	}
 
-	public const float SCREEN_GAP = 10000f;
-
-	public List<GameObject> placedObjects = new List<GameObject>();
-	public List<GameObject> staticPlacedObjects = new List<GameObject>();
-    public List<GameObject> backgroundPlacedObjects = new List<GameObject>();
-    public List<GameObject> staticBackgroundPlacedObjects = new List<GameObject>();
-
 	private List<GameObject> spawnedObjects = new List<GameObject>();
 
-	private void specialPlacementLogic(GameObject g, bool spawned, GameObject sg = null, GameObject oldG = null)
+	private void specialPlacementLogic(GameObject g, GameObject sg = null, GameObject oldG = null)
 	{
 		if(sg != null)
 		{
@@ -57,7 +58,18 @@ public class LevelManager
 			if(oldT != null)
 			{
 				Transfigure t = g.GetComponent<Transfigure>();
-				t.targetAndTags = new List<TargetAnimControllerAndTags>(oldT.targetAndTags);
+                t.targetAndTags.Clear();
+                foreach(TargetAnimControllerAndTags tar in oldT.targetAndTags)
+                {
+                    TargetAnimControllerAndTags newTar = new TargetAnimControllerAndTags();
+                    newTar.targetAnimController = tar.targetAnimController;
+                    newTar.includedTags = new List<string>(tar.includedTags);
+                    newTar.excludedTags = new List<string>(tar.excludedTags);
+                    newTar.reversible = tar.reversible;
+                    newTar.id = tar.id;
+                    newTar.done = false;
+                    t.targetAndTags.Add(newTar);
+                }
 			}
 		}
 
@@ -67,13 +79,10 @@ public class LevelManager
 			tt.initialize();
 		}
 
-		if(!spawned)
+		MoveHorizontalUntilCollision mh = g.GetComponent<MoveHorizontalUntilCollision>();
+		if(mh != null)
 		{
-			MoveHorizontalUntilCollision mh = g.GetComponent<MoveHorizontalUntilCollision>();
-			if(mh != null)
-			{
-				mh.run();
-			}
+			mh.run();
 		}
 
 		KoopaTroopa kt = g.GetComponent<KoopaTroopa>();
@@ -81,6 +90,12 @@ public class LevelManager
 		{
 			addResetListener(kt);
 		}
+
+        FirePower fp = g.GetComponent<FirePower>();
+        if(fp != null)
+        {
+            addResetListener(fp);
+        }
 	}
 
 	private void specialRevertLogic(GameObject g, GameObject sg = null)
@@ -143,7 +158,7 @@ public class LevelManager
         g.SetActive(true);
         sg.SetActive(true);
 
-		specialPlacementLogic(g, false, sg, toSpawn);
+		specialPlacementLogic(g, sg, toSpawn);
 
 		// Store placed object
 		if(g.tag == "Background")
@@ -165,7 +180,7 @@ public class LevelManager
 		g.transform.parent = parent;
 		g.SetActive(true);
 		g.AddComponent<JustSpawned>();
-		specialPlacementLogic(g, true);
+		specialPlacementLogic(g, null, toSpawn);
 		spawnedObjects.Add(g);
 	}
 
@@ -234,7 +249,7 @@ public class LevelManager
 					GameObject.DestroyImmediate(staticBackgroundPlacedObjects[i]);
 					staticBackgroundPlacedObjects.RemoveAt(i);
 
-					specialPlacementLogic(g, false, sg);
+					specialPlacementLogic(g, sg, toReplace);
 					
 					backgroundPlacedObjects.Add(g);
 					staticBackgroundPlacedObjects.Add(sg);
@@ -256,7 +271,7 @@ public class LevelManager
 					GameObject.DestroyImmediate(staticPlacedObjects[i]);
 					staticPlacedObjects.RemoveAt(i);
 
-					specialPlacementLogic(g, false, sg);
+					specialPlacementLogic(g, sg, toReplace);
 
 					placedObjects.Add(g);
 					staticPlacedObjects.Add(sg);
@@ -413,5 +428,7 @@ public class LevelManager
             GameObject.DestroyImmediate(spawnedObjects[i]);
         }
         spawnedObjects.Clear();
+
+        resetListeners.Clear();
     }
 }

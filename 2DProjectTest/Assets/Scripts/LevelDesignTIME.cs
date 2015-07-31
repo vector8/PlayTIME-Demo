@@ -432,6 +432,24 @@ public class LevelDesignTIME : MonoBehaviour
 			}
 			rfidFound(testRFIDKeys[testIndex]);
         }
+
+        if((int) (Input.GetAxisRaw ("Horizontal")) != 0 || (int) (Input.GetAxisRaw ("Vertical")) != 0 || Input.GetButton("Jump"))
+        {
+            levelManager.paused = false;
+            Time.timeScale = 1;
+        }
+        else if(Input.GetButtonDown("Cancel"))
+        {
+            levelManager.paused = !levelManager.paused;
+            if(Mathf.Approximately(Time.timeScale, 0f))
+            {
+                Time.timeScale = 1;
+            }
+            else
+            {
+                Time.timeScale = 0;
+            }
+        }
 	}
 
 	public void PlaceObject(Vector2 position, bool ignoreExisting = false, bool ignoreSnapToGrid = false)
@@ -834,6 +852,17 @@ public class LevelDesignTIME : MonoBehaviour
 				ct.directions.Add(directions);
 			}
 				break;
+            case CustomAction.ActionTypes.CustomScript:
+            {
+                Type t = Type.GetType(data4);
+                Component comp = go.AddComponent(t);
+                CustomAction c = (CustomAction)comp;
+                c.includedTags = includedTags;
+                c.excludedTags = excludedTags;
+                ct.actions.Add(c);
+                ct.directions.Add(directions);
+            }
+            break;
 			default:
 				break;
 			}
@@ -994,6 +1023,30 @@ public class LevelDesignTIME : MonoBehaviour
 			m.tagsToIgnore = ignoredTags;
 		}
 			break;
+        case "Spawn":
+        {
+            Spawn s = go.AddComponent<Spawn>();
+            string rfidKey = data1;
+
+            if (database.ContainsKey(rfidKey))
+            {
+                s.toSpawn = database[rfidKey].first;
+            }
+            else
+            {
+                string url = "http://" + databaseAddress + "/playtime/getComponents.php";
+                yield return StartCoroutine(pollDatabase(url, rfidKey, false));
+                if (database.ContainsKey(rfidKey))
+                {
+                    s.toSpawn = database[rfidKey].first;
+                }
+            }
+
+            int spawnCount = 0;
+            Int32.TryParse(data2, out spawnCount);
+            s.setMaxSpawnCount(spawnCount);
+        }
+            break;
 		default:
 			print ("Component " + name + " is undefined.");
 			break;
@@ -1097,6 +1150,8 @@ public class LevelDesignTIME : MonoBehaviour
 		else if(s.name.Equals(resetBtn.name))
 		{
 			levelManager.revert();
+            levelManager.paused = true;
+            Time.timeScale = 0;
 		}
 		else if(s.name.Equals(exitBtn.name))
 		{
@@ -1118,7 +1173,9 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(loadBtn.name))
 		{
-			StartCoroutine(saveLoad.loadGame("savefile1"));
+            levelManager.paused = true;
+            Time.timeScale = 0;
+            StartCoroutine(saveLoad.loadGame("savefile1"));
 		}
 		else if(s.name.Equals(snapToGridBtn.name))
 		{

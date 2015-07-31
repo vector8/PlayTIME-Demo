@@ -12,22 +12,25 @@ public class TimeTrigger : MonoBehaviour
 
 	void Update()
 	{
-		for(int i = 0; i < times.Count; i++)
-		{
-			if(times[i] > 0f)
-			{
-				times[i] -= Time.deltaTime;
-				if(times[i] <= 0f)
-				{
-					actions[i].run(null, i);
-					if(repeats[i])
-					{
-						times[i] = originalTimes[i];
-					}
-				}
-			}
-		}
-	}
+        if(!LevelManager.instance.paused)
+        {
+		    for(int i = 0; i < times.Count; i++)
+		    {
+			    if(times[i] > 0f)
+			    {
+				    times[i] -= Time.deltaTime;
+				    if(times[i] <= 0f)
+				    {
+					    actions[i].run(null, i);
+					    if(repeats[i])
+					    {
+						    times[i] = originalTimes[i];
+					    }
+				    }
+			    }
+		    }
+        }
+    }
 
 	public void initialize()
 	{

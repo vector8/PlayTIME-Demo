@@ -28,7 +28,7 @@ public class Transfigure : CustomAction
 {
 	public List<TargetAnimControllerAndTags> targetAndTags = new List<TargetAnimControllerAndTags>();
 
-	private RuntimeAnimatorController originalAnimController = null;
+	public RuntimeAnimatorController originalAnimController = null;
 	private SpriteRenderer sr;
 	private BoxCollider2D bc;
 	private Animator anim;

@@ -30,53 +30,55 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
 	// Update is called once per frame
 	void Update () 
 	{
-		if(anim == null)
-		{
-			anim = GetComponent<Animator>();
-		}
+        if(!LevelManager.instance.paused)
+        {
+		    if(anim == null)
+		    {
+			    anim = GetComponent<Animator>();
+		    }
 
-		if(mh == null)
-		{
-			mh = GetComponent<MoveHorizontalUntilCollision>();
-			moveHorizOriginalSpeed = mh.speed;
-		}
+		    if(mh == null)
+		    {
+			    mh = GetComponent<MoveHorizontalUntilCollision>();
+			    moveHorizOriginalSpeed = mh.speed;
+		    }
 
-		if(d == null)
-		{
-			d = GetComponent<Damage>();
-		}
+		    if(d == null)
+		    {
+			    d = GetComponent<Damage>();
+		    }
 
-		if(dead && !kicked)
-		{
-			if(deathDelayTimer >= DEATH_DELAY && reviveTimer < REVIVE_TIME)
-			{
-				reviveTimer += Time.deltaTime;
+		    if(dead && !kicked)
+		    {
+			    if(deathDelayTimer >= DEATH_DELAY && reviveTimer < REVIVE_TIME)
+			    {
+				    reviveTimer += Time.deltaTime;
 
-				if(reviveTimer >= REVIVE_TIME)
-				{
-					dead = false;
-					anim.SetBool("Dead", false);
-					reviveTimer = 0f;
-					mh.enabled = true;
-					mh.speed = moveHorizOriginalSpeed;
-					d.enabled = true;
-				}
-				anim.SetFloat("ReviveTimer", reviveTimer);
-			}
-			else if(deathDelayTimer < DEATH_DELAY)
-			{
-				deathDelayTimer += Time.deltaTime;
-			}
-		}
-		else if(kicked)
-		{
-			SpriteRenderer sr = GetComponent<SpriteRenderer>();
-			if(!sr.isVisible)
-			{
-				gameObject.SetActive(false);
-			}
-		}
-
+				    if(reviveTimer >= REVIVE_TIME)
+				    {
+					    dead = false;
+					    anim.SetBool("Dead", false);
+					    reviveTimer = 0f;
+					    mh.enabled = true;
+					    mh.speed = moveHorizOriginalSpeed;
+					    d.enabled = true;
+				    }
+				    anim.SetFloat("ReviveTimer", reviveTimer);
+			    }
+			    else if(deathDelayTimer < DEATH_DELAY)
+			    {
+				    deathDelayTimer += Time.deltaTime;
+			    }
+		    }
+		    else if(kicked)
+		    {
+			    SpriteRenderer sr = GetComponent<SpriteRenderer>();
+			    if(!sr.isVisible)
+			    {
+				    gameObject.SetActive(false);
+			    }
+		    }
+        }
 	}
 
 	void OnCollisionEnter2D(Collision2D coll)
@@ -120,5 +122,6 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
 		anim.SetBool("Dead", false);
 		anim.SetFloat("ReviveTimer", 0f);
 		d.includedTags.Remove("Enemy");
+        d.enabled = true;
 	}
 }

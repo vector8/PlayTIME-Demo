@@ -32,6 +32,8 @@ public class CameraControl : MonoBehaviour
     private int targetBtnTouchID = -1;
     private GameObject followTarget = null;
 
+    private float previousTime;
+
     // Use this for initialization
     void Start()
     {
@@ -51,6 +53,8 @@ public class CameraControl : MonoBehaviour
 
         targetBtn.GetComponent<PressGesture>().Pressed += buttonPressedHandler;
         targetBtn.GetComponent<ReleaseGesture>().Released += buttonReleasedHandler;
+
+        previousTime = Time.realtimeSinceStartup;
     }
 
     // Update is called once per frame
@@ -58,23 +62,27 @@ public class CameraControl : MonoBehaviour
     {
         Vector3 camPos = topCamera.transform.position;
 
+        float currentTime = Time.realtimeSinceStartup;
+        float deltaTime = currentTime - previousTime;
+        previousTime = currentTime;
+
         if (followTarget != null)
         {
             if (panBtnsPressed[0])
             {
-                followOffset.y += panSpeed * Time.deltaTime;
+                followOffset.y += panSpeed * deltaTime;
             }
             if (panBtnsPressed[1])
             {
-                followOffset.x += panSpeed * Time.deltaTime;
+                followOffset.x += panSpeed * deltaTime;
             }
             if (panBtnsPressed[2])
             {
-                followOffset.y -= panSpeed * Time.deltaTime;
+                followOffset.y -= panSpeed * deltaTime;
             }
             if (panBtnsPressed[3])
             {
-                followOffset.x -= panSpeed * Time.deltaTime;
+                followOffset.x -= panSpeed * deltaTime;
             }
 
             camPos.x = followTarget.transform.position.x + followOffset.x;
@@ -84,19 +92,19 @@ public class CameraControl : MonoBehaviour
         {
             if (panBtnsPressed[0])
             {
-                camPos.y += panSpeed * Time.deltaTime;
+                camPos.y += panSpeed * deltaTime;
             }
             if (panBtnsPressed[1])
             {
-                camPos.x += panSpeed * Time.deltaTime;
+                camPos.x += panSpeed * deltaTime;
             }
             if (panBtnsPressed[2])
             {
-                camPos.y -= panSpeed * Time.deltaTime;
+                camPos.y -= panSpeed * deltaTime;
             }
             if (panBtnsPressed[3])
             {
-                camPos.x -= panSpeed * Time.deltaTime;
+                camPos.x -= panSpeed * deltaTime;
             }
         }
 
@@ -106,11 +114,11 @@ public class CameraControl : MonoBehaviour
         float camSize = cam.orthographicSize;
         if (zoomBtnsPressed[0])
         {
-            camSize -= camSize * Time.deltaTime;
+            camSize -= camSize * deltaTime;
         }
         if (zoomBtnsPressed[1])
         {
-            camSize += camSize * Time.deltaTime;
+            camSize += camSize * deltaTime;
         }
         cam.orthographicSize = camSize;
 
