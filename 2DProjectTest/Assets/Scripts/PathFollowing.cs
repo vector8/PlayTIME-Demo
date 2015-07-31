@@ -55,7 +55,7 @@ public class PathFollowing : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
     {
-		if (currentState != PathState.Playing && (Input.GetKey(KeyCode.I) || (int) (Input.GetAxisRaw ("Horizontal")) != 0 || (int) (Input.GetAxisRaw ("Vertical")) != 0))
+		if (currentState != PathState.Playing && !LevelManager.instance.paused)
 		{
 			setStateToPlaying();
 		}

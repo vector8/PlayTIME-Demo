@@ -33,6 +33,7 @@ public abstract class CustomAction : MonoBehaviour
 		DespawnOther,	//	3	directions	TagsAffected
 		RespawnOther,	//	4	directions	TagsAffected
 		Damage,			//	5	directions	TagsAffected	Amount
-		MoveHoriz		//	6	directions	TagsAffected	Speed			TagsToIgnore
+        MoveHoriz,		//	6	directions	TagsAffected	Speed			TagsToIgnore
+        CustomScript	//	7	directions	TagsAffected	ScriptName		
 	}
 }

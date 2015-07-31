@@ -38,7 +38,7 @@ public class MoveHorizontalUntilCollision : CustomAction
 	// Update is called once per frame
 	void Update () 
 	{
-		if(running)
+		if(running && !LevelManager.instance.paused)
 		{
 			if(anim == null)
 			{

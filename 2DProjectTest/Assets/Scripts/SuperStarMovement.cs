@@ -11,16 +11,19 @@ public class SuperStarMovement : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
-		timer += Time.deltaTime;
-		if(timer > MAX_VERTICAL_TRAVEL_TIME)
-		{
-			direction *= -1;
-			timer = 0f;
-		}
+        if(!LevelManager.instance.paused)
+        {
+		    timer += Time.deltaTime;
+		    if(timer > MAX_VERTICAL_TRAVEL_TIME)
+		    {
+			    direction *= -1;
+			    timer = 0f;
+		    }
 
-		Vector3 position = gameObject.transform.position;
-		position.x += velocity * Time.deltaTime;
-		position.y += direction * velocity * Time.deltaTime;
-		gameObject.transform.position = position;
-	}
+		    Vector3 position = gameObject.transform.position;
+		    position.x += velocity * Time.deltaTime;
+		    position.y += direction * velocity * Time.deltaTime;
+		    gameObject.transform.position = position;
+        }
+    }
 }

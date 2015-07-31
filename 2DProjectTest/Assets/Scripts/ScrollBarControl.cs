@@ -14,11 +14,14 @@ public class ScrollBarControl : MonoBehaviour
 	public GameObject cameraBtn;
 	public GameObject cameraControlPanel;
 	public GameObject touchCanvas;
+    public GameObject saveBtn, loadBtn;
 	public float hScrollbarWidth;
 	public float vScrollbarWidth;
 	public float resetBtnOffset;
 	public float exitBtnOffset;
 	public float verticalBtnOffset;
+    public float saveBtnOffset;
+    public float loadBtnOffset;
 	public Vector2 camBtnOffset;
 	public Vector2 camPanelOffset;
 
@@ -77,6 +80,18 @@ public class ScrollBarControl : MonoBehaviour
 		pos.x += (bottomCam.orthographicSize * bottomCam.aspect) - camPanelOffset.x;
 		pos.y += bottomCam.orthographicSize - camPanelOffset.y;
 		cameraControlPanel.transform.position = pos;
+
+        pos = bottomCam.transform.position;
+        pos.z = UI_Z_POS;
+        pos.x -= (bottomCam.orthographicSize * bottomCam.aspect) - saveBtnOffset;
+        pos.y += bottomCam.orthographicSize - camBtnOffset.y;
+        saveBtn.transform.position = pos;
+
+        pos = bottomCam.transform.position;
+        pos.z = UI_Z_POS;
+        pos.x -= (bottomCam.orthographicSize * bottomCam.aspect) - loadBtnOffset;
+        pos.y += bottomCam.orthographicSize - camBtnOffset.y;
+        loadBtn.transform.position = pos;
 
 		scale = touchCanvas.transform.localScale;
 		scale.x = 2f * bottomCam.orthographicSize * bottomCam.aspect;

@@ -9,6 +9,8 @@ public class Health : MonoBehaviour
 	public int directions;
 	public float deathAnimTime = 0f;
 
+    public bool allowHeal = true, allowDamage = true;
+
 	public enum DeathActions
 	{
 		Despawn = 0,
@@ -102,6 +104,11 @@ public class Health : MonoBehaviour
 
 	public bool receiveDamage(GameObject other, int dmg)
 	{
+        if(dmg > 0 && !allowDamage || dmg < 0 && !allowHeal)
+        {
+            return false;
+        }
+
 		if(damageCooldownTimer <= 0)
 		{
 			Vector2 v = (Vector2)(other.transform.position - transform.position);

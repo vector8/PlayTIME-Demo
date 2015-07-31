@@ -12,8 +12,11 @@ public class StarPower : MonoBehaviour
 	private Transfigure[] transfigures;
 	
 	private Animator anim;
-	private RuntimeAnimatorController originalAnimator;
-	private RuntimeAnimatorController starPowerAnimator;
+	private RuntimeAnimatorController resetAnimator;
+    private RuntimeAnimatorController marioAnimator;
+    private RuntimeAnimatorController bigMarioAnimator;
+    private RuntimeAnimatorController fireMarioAnimator;
+    private RuntimeAnimatorController starPowerAnimator;
 	private RuntimeAnimatorController bigStarPowerAnimator;
 	private SpriteRenderer sr;
 	private BoxCollider2D bc;
@@ -23,7 +26,10 @@ public class StarPower : MonoBehaviour
 	{
 		health = GetComponent<Health>();
 		anim = GetComponent<Animator>();
-		originalAnimator = anim.runtimeAnimatorController;
+        resetAnimator = anim.runtimeAnimatorController;
+        marioAnimator = Resources.Load<RuntimeAnimatorController>("Mario");
+        bigMarioAnimator = Resources.Load<RuntimeAnimatorController>("BigMario");
+        fireMarioAnimator = Resources.Load<RuntimeAnimatorController>("FireMario");
 		starPowerAnimator = Resources.Load<RuntimeAnimatorController>("MarioStarPower");
 		bigStarPowerAnimator = Resources.Load<RuntimeAnimatorController>("BigMarioStarPower");
 		transfigures = GetComponents<Transfigure>();
@@ -41,7 +47,7 @@ public class StarPower : MonoBehaviour
 
 			if(durationTimer >= DURATION)
 			{
-				reset();
+				reset(false);
 			}
 		}
 
@@ -65,9 +71,9 @@ public class StarPower : MonoBehaviour
 		if(!running && coll.gameObject.tag == "SuperStar")
 		{
 			running = true;
-			health.enabled = false;
-			originalAnimator = anim.runtimeAnimatorController;
-			if(originalAnimator.name == "Mario")
+			health.allowDamage = false;
+            resetAnimator = anim.runtimeAnimatorController;
+            if (resetAnimator.name == "Mario")
 			{
 				anim.runtimeAnimatorController = starPowerAnimator;
 			}
@@ -79,10 +85,25 @@ public class StarPower : MonoBehaviour
 			{
 				transfigures[i].enabled = false;
 			}
-		}
-		else if(running && coll.gameObject.tag == "Mushroom")
+        }
+        else if (running && coll.gameObject.tag == "Mushroom")
+        {
+            if(resetAnimator.name != "FireMario")
+            {
+                resetAnimator = bigMarioAnimator;
+            }
+            anim.runtimeAnimatorController = bigStarPowerAnimator;
+        }
+		else if(running && coll.gameObject.tag == "FireFlower")
 		{
-			originalAnimator = Resources.Load<RuntimeAnimatorController>("BigMario");
+            if (resetAnimator.name == "BigMario")
+            {
+                resetAnimator = fireMarioAnimator;
+            }
+            else
+            {
+                resetAnimator = bigMarioAnimator;
+            }
 			anim.runtimeAnimatorController = bigStarPowerAnimator;
 		}
 		else if(running && coll.gameObject.tag == "Enemy")
@@ -91,12 +112,19 @@ public class StarPower : MonoBehaviour
 		}
 	}
 
-	public void reset()
+	public void reset(bool toOriginal = true)
 	{
 		running = false;
 		durationTimer = 0f;
-		health.enabled = true;
-		anim.runtimeAnimatorController = originalAnimator;
+		health.allowDamage = true;
+        if(toOriginal)
+        {
+            anim.runtimeAnimatorController = marioAnimator;
+        }
+        else
+        {
+            anim.runtimeAnimatorController = resetAnimator;
+        }
 		for(int i = 0; i < transfigures.Length; i++)
 		{
 			transfigures[i].enabled = true;
