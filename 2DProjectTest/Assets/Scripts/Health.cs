@@ -7,7 +7,6 @@ public class Health : MonoBehaviour
 {
 	public int hp, maxHP, startHP;
 	public int directions;
-	public float deathAnimTime = 0f;
 
     public bool allowHeal = true, allowDamage = true;
 
@@ -29,9 +28,7 @@ public class Health : MonoBehaviour
 
 	private float damageCooldownTimer;
 	private const float DAMAGE_COOLDOWN = 0.5f;
-	private float deathAnimTimer = 0f;
 	private float topAngle, sideAngle;
-	private Animator anim;
 	private static DeathActions maxDA = Enum.GetValues(typeof(DeathActions)).Cast<DeathActions>().Max();
 	
 
@@ -51,48 +48,32 @@ public class Health : MonoBehaviour
 	{
 		if(hp <= 0)
 		{
-			if(deathAnimTimer < deathAnimTime)
+			switch(da)
 			{
-				deathAnimTimer += Time.deltaTime;
-			}
-			
-			if(deathAnimTimer >= deathAnimTime)
-			{
-				hp = startHP;
-				deathAnimTimer = 0f;
+			case DeathActions.Despawn:
+            {
+				// De-activate this object, it will re-activate when the Reset button is pressed.
+                Despawn d = gameObject.GetComponent<Despawn>();
+                if(d == null)
+                {
+                    d = gameObject.AddComponent<Despawn>();
+                }
 
-				switch(da)
-				{
-				case DeathActions.Despawn:
-					// De-activate this object, it will re-activate when the Reset button is pressed.
-					gameObject.SetActive(false);
-					break;
-				case DeathActions.Respawn:
-					LevelManager.instance.revertObject(gameObject);
-					break;
-				default:
-					break;
-				}
+                d.deathAnimID = d.defaultDeathAnimID;
+                d.run();
+            }
+				break;
+			case DeathActions.Respawn:
+				LevelManager.instance.revertObject(gameObject);
+				break;
+			default:
+				break;
+			}
 				
-				DeathTrigger dt = GetComponent<DeathTrigger>();
-				if(dt != null)
-				{
-					dt.run();
-				}
-			}
-		}
-		else
-		{
-			if(anim == null)
+			DeathTrigger dt = GetComponent<DeathTrigger>();
+			if(dt != null)
 			{
-				anim = GetComponent<Animator>();
-			}
-			if(anim != null)
-			{
-				// disable warning in case the bool "dying" does not exist on this gameobject's animator
-				anim.logWarnings = false;
-				anim.SetBool("Dying", false);
-				anim.logWarnings = true;
+				dt.run();
 			}
 		}
 
@@ -123,18 +104,6 @@ public class Health : MonoBehaviour
 				if(hp <= 0)
 				{
 					hp = 0;
-					if(anim == null)
-					{
-						anim = GetComponent<Animator>();
-					}
-					if(anim != null)
-					{
-#pragma warning disable
-						anim.logWarnings = false;
-						anim.SetBool("Dying", true);
-						anim.logWarnings = true;
-#pragma warning restore
-					}
 				}
 				else if(hp > maxHP)
 				{

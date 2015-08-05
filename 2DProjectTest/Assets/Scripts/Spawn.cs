@@ -4,11 +4,10 @@ using System.Collections;
 public class Spawn : CustomAction
 {
 	public GameObject toSpawn = null;
-
 	public int maxSpawnCount;
 	public int currentSpawnCount;
-
 	public bool spawnUnderParent = false;
+    public GameObject lastSpawnedObject = null;
 
 	public override void run(GameObject other = null, int id = 0)
 	{
@@ -16,11 +15,11 @@ public class Spawn : CustomAction
 		{
 			if(spawnUnderParent)
 			{
-				LevelManager.instance.placeSpawnedObject(gameObject.transform.position, toSpawn, gameObject.transform.parent);
+				lastSpawnedObject = LevelManager.instance.placeSpawnedObject(gameObject.transform.position, toSpawn, gameObject.transform.parent);
 			}
 			else
 			{
-				LevelManager.instance.placeSpawnedObject(gameObject.transform.position + new Vector3(0f, 1f), toSpawn, gameObject.transform);
+                lastSpawnedObject = LevelManager.instance.placeSpawnedObject(gameObject.transform.position + new Vector3(0f, 1f), toSpawn, gameObject.transform);
 			}
 			currentSpawnCount--;
 		}

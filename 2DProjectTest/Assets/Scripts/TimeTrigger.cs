@@ -21,7 +21,7 @@ public class TimeTrigger : MonoBehaviour
 				    times[i] -= Time.deltaTime;
 				    if(times[i] <= 0f)
 				    {
-					    actions[i].run(null, i);
+                        LevelManager.instance.addActionQueueItem(actions[i], null, i);
 					    if(repeats[i])
 					    {
 						    times[i] = originalTimes[i];

@@ -10,7 +10,7 @@ public class DeathTrigger : MonoBehaviour
 	{
 		foreach(CustomAction a in actions)
 		{
-			a.run();
+            LevelManager.instance.addActionQueueItem(a);
 		}
 	}
 	
