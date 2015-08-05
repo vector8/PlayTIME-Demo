@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TouchScript;
 using TouchScript.Gestures;
-using UnityEditor;
+using System.Runtime.InteropServices;
 
 public class LevelDesignTIME : MonoBehaviour 
 {
@@ -58,6 +58,11 @@ public class LevelDesignTIME : MonoBehaviour
 	private bool snapToGrid = true;
 
     private string prevSavePath;
+
+    [DllImport("user32.dll")]
+    private static extern void SaveFileDialog();
+    [DllImport("user32.dll")]
+    private static extern void OpenFileDialog();
 
 	void Awake()
 	{
@@ -1189,23 +1194,41 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(saveBtn.name))
 		{
-            string path = EditorUtility.SaveFilePanel("Save Level", prevSavePath, "", "lts");
-            if (path.Length != 0)
+            System.Windows.Forms.SaveFileDialog sfd = new System.Windows.Forms.SaveFileDialog();
+            sfd.Filter = "Level Design TIME Save File (*.lts)|*.lts";
+            sfd.FilterIndex = 0;
+            
+            if(sfd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                saveLoad.save(path);
-                prevSavePath = path;
+                saveLoad.save(sfd.FileName);
             }
+            //string path = EditorUtility.SaveFilePanel("Save Level", prevSavePath, "", "lts");
+            //if (path.Length != 0)
+            //{
+            //    saveLoad.save(path);
+            //    prevSavePath = path;
+            //}
         }
 		else if(s.name.Equals(loadBtn.name))
 		{
             levelManager.paused = true;
             Time.timeScale = 0;
-            string path = EditorUtility.OpenFilePanel("Load Level", prevSavePath, "lts");
-            if (path.Length != 0)
+
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
+            ofd.Filter = "Level Design TIME Save File (*.lts)|*.lts";
+            ofd.FilterIndex = 0;
+
+            if(ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                StartCoroutine(saveLoad.loadGame(path));
-                prevSavePath = path;
+                StartCoroutine(saveLoad.loadGame(ofd.FileName));
             }
+
+            //string path = EditorUtility.OpenFilePanel("Load Level", prevSavePath, "lts");
+            //if (path.Length != 0)
+            //{
+            //    StartCoroutine(saveLoad.loadGame(path));
+            //    prevSavePath = path;
+            //}
         }
 		else if(s.name.Equals(snapToGridBtn.name))
 		{
