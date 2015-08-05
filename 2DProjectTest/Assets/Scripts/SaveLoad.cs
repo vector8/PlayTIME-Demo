@@ -114,12 +114,17 @@ public class SaveLoad : MonoBehaviour
             int i = 0;
             string rfidKey = tokens[i++];
             yield return StartCoroutine(ldTime.rfidFoundCoroutine(rfidKey));
+
+            if(rfidKey == "e05fe274b5")
+            {
+                print("Stop here.");
+            }
             
             Vector3 position = new Vector3(float.Parse(tokens[i++]), float.Parse(tokens[i++]), float.Parse(tokens[i++]));
             Pair<GameObject, GameObject> p;
             if (ldTime.database[ldTime.activeKey].first.tag != "Background")
             {
-                ldTime.PlaceObject(position, false, true);
+                ldTime.PlaceObject(position, true, true);
                 p = lvlManager.getObjectExactlyAtPosition(position);
             }
             else
