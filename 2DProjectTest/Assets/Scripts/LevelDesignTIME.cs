@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TouchScript;
 using TouchScript.Gestures;
+using UnityEditor;
 
 public class LevelDesignTIME : MonoBehaviour 
 {
@@ -55,6 +56,8 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private const float SNAP_VALUE = 0.2f;
 	private bool snapToGrid = true;
+
+    private string prevSavePath;
 
 	void Awake()
 	{
@@ -450,6 +453,8 @@ public class LevelDesignTIME : MonoBehaviour
                 Time.timeScale = 0;
             }
         }
+
+        levelManager.executeActionQueue();
 	}
 
 	public void PlaceObject(Vector2 position, bool ignoreExisting = false, bool ignoreSnapToGrid = false)
@@ -723,7 +728,6 @@ public class LevelDesignTIME : MonoBehaviour
 			{
 				h.setDeathAction(deathAction);
 			}
-			float.TryParse(data5, out h.deathAnimTime);
 		}
 			break;
 		case "Resize":
@@ -793,6 +797,10 @@ public class LevelDesignTIME : MonoBehaviour
 			case CustomAction.ActionTypes.Despawn:
 			{
 				Despawn d = go.AddComponent<Despawn>();
+                int deathAnimID;
+                int.TryParse(data4, out deathAnimID);
+                d.deathAnimID = deathAnimID;
+                d.defaultDeathAnimID = deathAnimID;
 				d.includedTags = includedTags;
 				d.excludedTags = excludedTags;
 				ct.actions.Add(d);
@@ -860,6 +868,18 @@ public class LevelDesignTIME : MonoBehaviour
                 c.includedTags = includedTags;
                 c.excludedTags = excludedTags;
                 ct.actions.Add(c);
+                ct.directions.Add(directions);
+            }
+            break;
+            case CustomAction.ActionTypes.Bounce:
+            {
+                Bounce b = go.AddComponent<Bounce>();
+                b.includedTags = includedTags;
+                b.excludedTags = excludedTags;
+                float bounceHeight;
+                float.TryParse(data4, out bounceHeight);
+                b.bounceHeight = bounceHeight;
+                ct.actions.Add(b);
                 ct.directions.Add(directions);
             }
             break;
@@ -1169,14 +1189,24 @@ public class LevelDesignTIME : MonoBehaviour
 		}
 		else if(s.name.Equals(saveBtn.name))
 		{
-			saveLoad.save("savefile1");
-		}
+            string path = EditorUtility.SaveFilePanel("Save Level", prevSavePath, "", "lts");
+            if (path.Length != 0)
+            {
+                saveLoad.save(path);
+                prevSavePath = path;
+            }
+        }
 		else if(s.name.Equals(loadBtn.name))
 		{
             levelManager.paused = true;
             Time.timeScale = 0;
-            StartCoroutine(saveLoad.loadGame("savefile1"));
-		}
+            string path = EditorUtility.OpenFilePanel("Load Level", prevSavePath, "lts");
+            if (path.Length != 0)
+            {
+                StartCoroutine(saveLoad.loadGame(path));
+                prevSavePath = path;
+            }
+        }
 		else if(s.name.Equals(snapToGridBtn.name))
 		{
 			snapToGrid = !snapToGrid;

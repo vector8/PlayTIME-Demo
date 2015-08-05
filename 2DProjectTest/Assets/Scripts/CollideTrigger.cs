@@ -40,29 +40,39 @@ public class CollideTrigger : MonoBehaviour
 			a.reset();
 		}
 	}
+
+    void OnTriggerEnter2D(Collider2D coll)
+    {
+        triggerCollision(coll.gameObject);
+    }
 	
 	void OnCollisionEnter2D(Collision2D coll)
 	{
-		JustSpawned js = coll.gameObject.GetComponent<JustSpawned>();
-		if(js != null && js.enabled)
-		{
-			return;
-		}
-
-		Vector2 v = (Vector2)(coll.gameObject.transform.position - transform.position);
-
-		for(int i = 0; i < actions.Count; i++)
-		{
-			if (actions[i].enabled &&
-				(Vector2.Angle(v, transform.up) <= topAngle && directionsInclude(directions[i], CollideDirections.Top) ||
-			    Vector2.Angle(v, transform.right) <= sideAngle && directionsInclude(directions[i], CollideDirections.Right) ||
-			    Vector2.Angle(v, -transform.up) <= topAngle && directionsInclude(directions[i], CollideDirections.Bottom) ||
-			    Vector2.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions[i], CollideDirections.Left)))
-			{
-				actions[i].run(coll.gameObject, i);
-			}
-		}
+        triggerCollision(coll.gameObject);
 	}
+
+    private void triggerCollision(GameObject other)
+    {
+        JustSpawned js = other.GetComponent<JustSpawned>();
+        if (js != null && js.enabled)
+        {
+            return;
+        }
+
+        Vector2 v = (Vector2)(other.transform.position - transform.position);
+
+        for (int i = 0; i < actions.Count; i++)
+        {
+            if (actions[i].enabled &&
+                (Vector2.Angle(v, transform.up) <= topAngle && directionsInclude(directions[i], CollideDirections.Top) ||
+                Vector2.Angle(v, transform.right) <= sideAngle && directionsInclude(directions[i], CollideDirections.Right) ||
+                Vector2.Angle(v, -transform.up) <= topAngle && directionsInclude(directions[i], CollideDirections.Bottom) ||
+                Vector2.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions[i], CollideDirections.Left)))
+            {
+                LevelManager.instance.addActionQueueItem(actions[i], other, i);
+            }
+        }
+    }
 	
 	private bool directionsInclude(int directions, CollideDirections collisionDirection)
 	{

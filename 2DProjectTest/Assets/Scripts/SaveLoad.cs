@@ -11,9 +11,9 @@ public class SaveLoad : MonoBehaviour
     public LevelDesignTIME ldTime;
     private LevelManager lvlManager = LevelManager.instance;
 
-	public void save(string name)
+	public void save(string path)
 	{
-		StreamWriter writer = new StreamWriter(Application.persistentDataPath + "/" + name + ".lts");
+		StreamWriter writer = new StreamWriter(path);
 
         string entry = "";
         entry = topCamera.transform.position.x + "," + topCamera.transform.position.y + "," + topCamera.transform.position.z + "," + topCamera.orthographicSize + ",";
@@ -47,9 +47,9 @@ public class SaveLoad : MonoBehaviour
         writer.Close();
 	}
 
-	public IEnumerator loadGame(string name)
+	public IEnumerator loadGame(string path)
 	{
-	    StreamReader reader = new StreamReader(Application.persistentDataPath + "/" + name + ".lts");
+	    StreamReader reader = new StreamReader(path);
 
         try
         {

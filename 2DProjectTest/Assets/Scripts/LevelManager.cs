@@ -1,6 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+public struct ActionQueueItem
+{
+    public CustomAction action;
+    public GameObject target;
+    public int id;
+}
+
 public class LevelManager
 {
     public const float SCREEN_GAP = 10000f;
@@ -13,6 +20,8 @@ public class LevelManager
 
 	private static LevelManager _instance = null;
 	private List<ICanReset> resetListeners = new List<ICanReset>();
+
+    private List<ActionQueueItem> actionQueue = new List<ActionQueueItem>();
 
 	public static LevelManager instance 
 	{
@@ -173,7 +182,7 @@ public class LevelManager
 		}
 	}
 
-	public void placeSpawnedObject(Vector2 position, GameObject toSpawn, Transform parent)
+	public GameObject placeSpawnedObject(Vector2 position, GameObject toSpawn, Transform parent)
 	{
 		GameObject g = GameObject.Instantiate(toSpawn);
 		g.transform.position = position;
@@ -182,6 +191,7 @@ public class LevelManager
 		g.AddComponent<JustSpawned>();
 		specialPlacementLogic(g, null, toSpawn);
 		spawnedObjects.Add(g);
+        return g;
 	}
 
 	public void removeObject(Vector2 position, bool backgroundOnly)
@@ -227,6 +237,19 @@ public class LevelManager
 			}
 		}
 	}
+
+    public void removeSpawnedObject(GameObject go)
+    {
+        for (int i = 0; i < spawnedObjects.Count; i++)
+        {
+            if (spawnedObjects[i] == go)
+            {
+                GameObject.Destroy(spawnedObjects[i]);
+                spawnedObjects.RemoveAt(i);
+                return;
+            }
+        }
+    }
 
 	public void replaceObject(Vector2 position, GameObject toReplace, GameObject staticToReplace, Transform parent)
 	{
@@ -301,6 +324,7 @@ public class LevelManager
 		{
 			GameObject.DestroyImmediate(spawnedObjects[i]);
 		}
+        spawnedObjects.Clear();
 
 		foreach(ICanReset r in resetListeners)
 		{
@@ -430,5 +454,25 @@ public class LevelManager
         spawnedObjects.Clear();
 
         resetListeners.Clear();
+    }
+
+    public void addActionQueueItem(CustomAction a, GameObject t = null, int id = 0)
+    {
+        ActionQueueItem aqi = new ActionQueueItem();
+        aqi.action = a;
+        aqi.target = t;
+        aqi.id = id;
+
+        this.actionQueue.Add(aqi);
+    }
+
+    public void executeActionQueue()
+    {
+        for (int i = 0; i < actionQueue.Count; i++)
+        {
+            actionQueue[i].action.run(actionQueue[i].target, actionQueue[i].id);
+        }
+
+        actionQueue.Clear();
     }
 }

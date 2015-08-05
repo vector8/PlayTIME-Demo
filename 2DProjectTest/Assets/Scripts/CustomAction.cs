@@ -28,12 +28,13 @@ public abstract class CustomAction : MonoBehaviour
 	public enum ActionTypes
 	{	// DB fields		ID	Directions	Param1			Param2			Param3
  		Spawn = 0,		//	0	directions	TagsAffected	rfidKeyToSpawn	#ToSpawn 
-		Despawn,		//	1	directions	TagsAffected
+		Despawn,		//	1	directions	TagsAffected    DeathAnimID
 		Transfigure,	//	2	directions	TagsAffected	AnimController	Reversible
-		DespawnOther,	//	3	directions	TagsAffected
+		DespawnOther,	//	3	directions	TagsAffected    DeathAnimID
 		RespawnOther,	//	4	directions	TagsAffected
-		Damage,			//	5	directions	TagsAffected	Amount
+		Damage,			//	5	directions	TagsAffected	Amount          
         MoveHoriz,		//	6	directions	TagsAffected	Speed			TagsToIgnore
-        CustomScript	//	7	directions	TagsAffected	ScriptName		
+        CustomScript,	//	7	directions	TagsAffected	ScriptName	
+	    Bounce          //  8   directions  TagsAffected    BounceHeight   
 	}
 }

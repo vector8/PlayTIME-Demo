@@ -10,6 +10,11 @@ public class FirePower : MonoBehaviour, ICanReset
     private RuntimeAnimatorController bigMarioStarPowerAnimator;
     private bool active = false;
 
+    private float fireballTimer = 0f;
+    private const float FIREBALL_COOLDOWN = 0.25f;
+
+    private Spawn fireballSpawn;
+
     // Use this for initialization
     void Start()
     {
@@ -23,9 +28,23 @@ public class FirePower : MonoBehaviour, ICanReset
     // Update is called once per frame
     void Update()
     {
-        if (active)
+        if(fireballTimer < FIREBALL_COOLDOWN)
         {
-            // fire power logic in here
+            fireballTimer += Time.deltaTime;
+        }
+
+        if (active && Input.GetButtonDown("Fire1") && fireballTimer >= FIREBALL_COOLDOWN)
+        {
+            if (fireballSpawn == null)
+            {
+                fireballSpawn = GetComponent<Spawn>();
+            }
+
+            fireballSpawn.spawnUnderParent = true;
+            fireballSpawn.run();
+            fireballSpawn.currentSpawnCount++;
+            Rigidbody2D rb = fireballSpawn.lastSpawnedObject.GetComponent<Rigidbody2D>();
+            rb.velocity = new Vector2(5f * gameObject.transform.localScale.x, rb.velocity.y);
         }
     }
 
