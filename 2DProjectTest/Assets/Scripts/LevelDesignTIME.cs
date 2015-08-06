@@ -50,7 +50,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
-	private string[] testRFIDKeys = {"4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", 
+	private string[] testRFIDKeys = {"c429534f5f","4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", 
 		"4d004aef92", "4d004ab4ed", "3001ffcc05", "5e45686e2a", "9f4d96142f"};
 	private int testIndex = -1;
 
@@ -1072,6 +1072,15 @@ public class LevelDesignTIME : MonoBehaviour
             s.setMaxSpawnCount(spawnCount);
         }
             break;
+        case "Despawn":
+        {
+            Despawn d = go.AddComponent<Despawn>();
+            int deathAnimID;
+            int.TryParse(data1, out deathAnimID);
+            d.deathAnimID = deathAnimID;
+            d.defaultDeathAnimID = deathAnimID;
+        }
+        break;
 		default:
 			print ("Component " + name + " is undefined.");
 			break;
