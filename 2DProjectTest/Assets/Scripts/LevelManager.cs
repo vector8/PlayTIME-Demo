@@ -17,6 +17,7 @@ public class LevelManager
     public List<GameObject> backgroundPlacedObjects = new List<GameObject>();
     public List<GameObject> staticBackgroundPlacedObjects = new List<GameObject>();
     public bool paused = true;
+    public bool loading = false;
 
 	private static LevelManager _instance = null;
 	private List<ICanReset> resetListeners = new List<ICanReset>();

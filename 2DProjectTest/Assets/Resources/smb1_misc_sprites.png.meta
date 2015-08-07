@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: e8713a3d74e546b4d8cbcd88fd24005d
-timeCreated: 1437164274
+timeCreated: 1438960457
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -453,6 +453,8 @@ TextureImporter:
     21300892: smb1_misc_sprites_446
     21300894: smb1_misc_sprites_447
     21300896: smb1_misc_sprites_448
+    21300898: smb1_misc_sprites_449
+    21300900: smb1_misc_sprites_450
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -591,20 +593,20 @@ TextureImporter:
     - name: smb1_misc_sprites_9
       rect:
         serializedVersion: 2
-        x: 306
-        y: 827
-        width: 24
-        height: 168
+        x: 318
+        y: 843
+        width: 8
+        height: 152
       alignment: 0
       pivot: {x: .5, y: .5}
       border: {x: 0, y: 0, z: 0, w: 0}
     - name: smb1_misc_sprites_10
       rect:
         serializedVersion: 2
-        x: 331
-        y: 827
-        width: 24
-        height: 168
+        x: 343
+        y: 843
+        width: 8
+        height: 152
       alignment: 0
       pivot: {x: .5, y: .5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -4985,6 +4987,26 @@ TextureImporter:
         y: 882
         width: 3
         height: 14
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: smb1_misc_sprites_449
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 843
+        width: 8
+        height: 152
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: smb1_misc_sprites_450
+      rect:
+        serializedVersion: 2
+        x: 270
+        y: 843
+        width: 8
+        height: 152
       alignment: 0
       pivot: {x: .5, y: .5}
       border: {x: 0, y: 0, z: 0, w: 0}

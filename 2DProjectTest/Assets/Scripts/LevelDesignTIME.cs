@@ -50,7 +50,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
-	private string[] testRFIDKeys = {"c429534f5f","4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", 
+	private string[] testRFIDKeys = {"0a074861d4","c429534f5f","4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", 
 		"4d004aef92", "4d004ab4ed", "3001ffcc05", "5e45686e2a", "9f4d96142f"};
 	private int testIndex = -1;
 
@@ -350,7 +350,7 @@ public class LevelDesignTIME : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
-		if(cameraPanel.activeSelf)
+		if(cameraPanel.activeSelf || levelManager.loading)
 			return;
 
 		if(touchManager.ActiveTouches.Count > 0)
@@ -1081,6 +1081,39 @@ public class LevelDesignTIME : MonoBehaviour
             d.defaultDeathAnimID = deathAnimID;
         }
         break;
+        case "ChildObject":
+        {
+            string rfidKey = data1;
+            GameObject child, staticChild;
+
+            if (database.ContainsKey(rfidKey))
+            {
+                child = database[rfidKey].first;
+                staticChild = database[rfidKey].second;
+            }
+            else
+            {
+                string url = "http://" + databaseAddress + "/playtime/getComponents.php";
+                yield return StartCoroutine(pollDatabase(url, rfidKey, false));
+                if (database.ContainsKey(rfidKey))
+                {
+                    child = database[rfidKey].first;
+                    staticChild = database[rfidKey].second;
+
+                    Vector2 offset = new Vector2();
+                    float.TryParse(data2, out offset.x);
+                    float.TryParse(data3, out offset.y);
+
+                    child.transform.parent = go.transform;
+                    child.transform.localPosition = offset;
+                    child.SetActive(true);
+                    staticChild.transform.parent = staticGO.transform;
+                    staticChild.transform.localPosition = offset;
+                    staticChild.SetActive(true);
+                }
+            }
+        }
+        break;
 		default:
 			print ("Component " + name + " is undefined.");
 			break;
@@ -1229,6 +1262,7 @@ public class LevelDesignTIME : MonoBehaviour
 
             if(ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
+                levelManager.loading = true;
                 StartCoroutine(saveLoad.loadGame(ofd.FileName));
             }
 
