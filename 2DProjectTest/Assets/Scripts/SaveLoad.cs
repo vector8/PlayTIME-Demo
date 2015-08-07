@@ -101,6 +101,7 @@ public class SaveLoad : MonoBehaviour
         finally
         {
             reader.Close();
+            lvlManager.loading = false;
         }
 	}
 
@@ -113,15 +114,17 @@ public class SaveLoad : MonoBehaviour
         {
             int i = 0;
             string rfidKey = tokens[i++];
-            yield return StartCoroutine(ldTime.rfidFoundCoroutine(rfidKey));
 
-            if(rfidKey == "e05fe274b5")
+            if (rfidKey == "0a074861d4")
             {
                 print("Stop here.");
             }
+
+            yield return StartCoroutine(ldTime.rfidFoundCoroutine(rfidKey));
             
             Vector3 position = new Vector3(float.Parse(tokens[i++]), float.Parse(tokens[i++]), float.Parse(tokens[i++]));
             Pair<GameObject, GameObject> p;
+            //ldTime.activeKey = rfidKey; // In case the object has a child object or spawn component, which will change the activeKey
             if (ldTime.database[ldTime.activeKey].first.tag != "Background")
             {
                 ldTime.PlaceObject(position, true, true);
