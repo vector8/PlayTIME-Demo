@@ -22,7 +22,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	public GameObject pathBtn, replaceBtn, removeBtn, resetBtn, exitBtn, saveBtn, loadBtn, snapToGridBtn;
 	public GameObject pathSliderGroup, pathSliderTab, jumpSliderGroup, jumpSliderTab, moveSliderGroup, moveSliderTab, 
-					  aiHorizMoveSliderGroup, aiHorizMoveSliderTab;
+					  aiHorizMoveSliderGroup, aiHorizMoveSliderTab, loadingSign;
 	public SaveLoad saveLoad;
 	public GameObject cameraBtn, cameraPanel, cameraOutline;
 	public GameObject pentaArrow, bottomCamCanvas;
@@ -117,8 +117,8 @@ public class LevelDesignTIME : MonoBehaviour
             PlacementUI.transform.Find("ReplaceRemove").gameObject.SetActive(true);
             PlacementUI.transform.Find("ReplaceRemove/PathBtn").gameObject.SetActive(false);
 			bool showReplaceButton = activeKey != "" && 
-				(database[activeKey].first.tag != "Background" && foregroundObjectPresent ||
-				 database[activeKey].first.tag == "Background" && backgroundObjectPresent);
+				(database[activeKey].first.tag != "PaintableBackground" && foregroundObjectPresent ||
+				 database[activeKey].first.tag == "PaintableBackground" && backgroundObjectPresent);
 			PlacementUI.transform.Find("ReplaceRemove/ReplaceBtn").gameObject.SetActive(showReplaceButton);
 			pathSliderGroup.SetActive(false);
 			jumpSliderGroup.SetActive(false);
@@ -351,7 +351,13 @@ public class LevelDesignTIME : MonoBehaviour
 	void Update ()
     {
 		if(cameraPanel.activeSelf || levelManager.loading)
+        { 
 			return;
+        }
+        else if(!levelManager.loading)
+        {
+            loadingSign.SetActive(false);
+        }
 
 		if(touchManager.ActiveTouches.Count > 0)
 		{
@@ -367,7 +373,7 @@ public class LevelDesignTIME : MonoBehaviour
 					//print (Vector2.Distance(touchPosition, dragStartPosition));
 					if(Vector2.Distance(touchPosition, dragStartPosition) > 0.1f)
 					{
-						if(activeKey != "" && database[activeKey].first.tag == "Background")
+						if(activeKey != "" && database[activeKey].first.tag == "PaintableBackground")
 						{
 							if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
 							{
@@ -465,8 +471,8 @@ public class LevelDesignTIME : MonoBehaviour
 	public void PlaceObject(Vector2 position, bool ignoreExisting = false, bool ignoreSnapToGrid = false)
 	{
 		// Check if spot is free
-		if ((database[activeKey].first.tag == "Background" && !levelManager.isBackgroundObjectAtPosition(position)) || 
-		    (database[activeKey].first.tag != "Background" && !levelManager.isObjectAtPosition(position)) || 
+		if ((database[activeKey].first.tag == "PaintableBackground" && !levelManager.isBackgroundObjectAtPosition(position)) || 
+		    (database[activeKey].first.tag != "PaintableBackground" && !levelManager.isObjectAtPosition(position)) || 
 		    ignoreExisting)
 		{
 			if(!ignoreSnapToGrid && snapToGrid)
@@ -681,7 +687,7 @@ public class LevelDesignTIME : MonoBehaviour
 			break;
 		case "Tag":
 			go.tag = data1;
-			if(data1 == "Background")
+			if(data1 == "PaintableBackground")
 			{
 				staticGO.tag = data1;
 			}
@@ -1122,6 +1128,11 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void buttonReleasedHandler(object sender, EventArgs e)
 	{
+        if(levelManager.loading)
+        {
+            return;
+        }
+
 		ReleaseGesture gesture = (ReleaseGesture) sender;
 		GameObject s = gesture.gameObject;
 
@@ -1131,7 +1142,7 @@ public class LevelDesignTIME : MonoBehaviour
 			
 			if(activeKey != "" && database[activeKey].first.activeSelf) 
 			{
-				if((database[activeKey].first.tag != "Background" || database[activeKey].first.tag == "Background" && database[activeKey].first.GetComponent<SpriteRenderer>() != null))
+				if((database[activeKey].first.tag != "PaintableBackground" || database[activeKey].first.tag == "PaintableBackground" && database[activeKey].first.GetComponent<SpriteRenderer>() != null))
 				{
 					PlaceObject(lastTouchPosition);
 				}
@@ -1168,6 +1179,11 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private void buttonPressedHandler(object sender, EventArgs e)
 	{
+        if(levelManager.loading)
+        {
+            return;
+        }
+
 		PressGesture gesture = (PressGesture) sender;
 		GameObject s = gesture.gameObject;
 		if(s.name.Equals(pathBtn.name))
@@ -1244,12 +1260,6 @@ public class LevelDesignTIME : MonoBehaviour
             {
                 saveLoad.save(sfd.FileName);
             }
-            //string path = EditorUtility.SaveFilePanel("Save Level", prevSavePath, "", "lts");
-            //if (path.Length != 0)
-            //{
-            //    saveLoad.save(path);
-            //    prevSavePath = path;
-            //}
         }
 		else if(s.name.Equals(loadBtn.name))
 		{
@@ -1263,15 +1273,9 @@ public class LevelDesignTIME : MonoBehaviour
             if(ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 levelManager.loading = true;
+                loadingSign.SetActive(true);
                 StartCoroutine(saveLoad.loadGame(ofd.FileName));
             }
-
-            //string path = EditorUtility.OpenFilePanel("Load Level", prevSavePath, "lts");
-            //if (path.Length != 0)
-            //{
-            //    StartCoroutine(saveLoad.loadGame(path));
-            //    prevSavePath = path;
-            //}
         }
 		else if(s.name.Equals(snapToGridBtn.name))
 		{
@@ -1284,13 +1288,13 @@ public class LevelDesignTIME : MonoBehaviour
 			
 			PlacementUI.SetActive(true);
 			
-			if(activeKey != "" && (database[activeKey].first.tag == "Background" || !levelManager.isObjectAtPosition(touchPosition)))
+			if(activeKey != "" && (database[activeKey].first.tag == "PaintableBackground" || !levelManager.isObjectAtPosition(touchPosition)))
 			{
 				database[activeKey].first.SetActive(true);
 				database[activeKey].second.SetActive(true);
 			}
 			
-			if(activeKey != "" && database[activeKey].first.tag == "Background")
+			if(activeKey != "" && database[activeKey].first.tag == "PaintableBackground")
 			{
 				if(database[activeKey].first.GetComponent<SpriteRenderer>() != null)
 				{

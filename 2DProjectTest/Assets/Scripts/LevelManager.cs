@@ -171,7 +171,7 @@ public class LevelManager
 		specialPlacementLogic(g, sg, toSpawn);
 
 		// Store placed object
-		if(g.tag == "Background")
+		if(g.tag == "PaintableBackground")
 		{
 			backgroundPlacedObjects.Add(g);
 			staticBackgroundPlacedObjects.Add(sg);
@@ -259,7 +259,7 @@ public class LevelManager
 		GameObject sg = GameObject.Instantiate(staticToReplace);
 		sg.transform.parent = parent;
 
-		if(g.tag == "Background")
+		if(g.tag == "PaintableBackground")
 		{
 			for(int i = 0; i < staticBackgroundPlacedObjects.Count; i++)
 			{
