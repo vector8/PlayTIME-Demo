@@ -125,7 +125,7 @@ public class SaveLoad : MonoBehaviour
             Vector3 position = new Vector3(float.Parse(tokens[i++]), float.Parse(tokens[i++]), float.Parse(tokens[i++]));
             Pair<GameObject, GameObject> p;
             //ldTime.activeKey = rfidKey; // In case the object has a child object or spawn component, which will change the activeKey
-            if (ldTime.database[ldTime.activeKey].first.tag != "Background")
+            if (ldTime.database[ldTime.activeKey].first.tag != "PaintableBackground")
             {
                 ldTime.PlaceObject(position, true, true);
                 p = lvlManager.getObjectExactlyAtPosition(position);
