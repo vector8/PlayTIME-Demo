@@ -156,7 +156,7 @@ public class LevelManager
 		instance = this;
 	}
 
-	public void placeObject(Vector2 position, GameObject toSpawn, GameObject staticToSpawn, Transform parent)
+    public Pair<GameObject, GameObject> placeObject(Vector2 position, GameObject toSpawn, GameObject staticToSpawn, Transform parent)
 	{
 		GameObject g = GameObject.Instantiate(toSpawn);
 		g.transform.position = (new Vector2(0f, LevelManager.SCREEN_GAP)) + position;
@@ -181,6 +181,9 @@ public class LevelManager
 			placedObjects.Add(g);
 			staticPlacedObjects.Add(sg);
 		}
+
+        Pair<GameObject, GameObject> p = new Pair<GameObject, GameObject>(g, sg);
+        return p;
 	}
 
 	public GameObject placeSpawnedObject(Vector2 position, GameObject toSpawn, Transform parent)

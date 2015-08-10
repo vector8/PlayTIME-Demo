@@ -115,26 +115,17 @@ public class SaveLoad : MonoBehaviour
             int i = 0;
             string rfidKey = tokens[i++];
 
-            if (rfidKey == "0a074861d4")
-            {
-                print("Stop here.");
-            }
-
             yield return StartCoroutine(ldTime.rfidFoundCoroutine(rfidKey));
             
             Vector3 position = new Vector3(float.Parse(tokens[i++]), float.Parse(tokens[i++]), float.Parse(tokens[i++]));
-            Pair<GameObject, GameObject> p;
-            //ldTime.activeKey = rfidKey; // In case the object has a child object or spawn component, which will change the activeKey
-            if (ldTime.database[ldTime.activeKey].first.tag != "PaintableBackground")
+            Pair<GameObject, GameObject> p = ldTime.PlaceObject(position, true, true);
+
+            if(p == null)
             {
-                ldTime.PlaceObject(position, true, true);
-                p = lvlManager.getObjectExactlyAtPosition(position);
+                print("Could not load figure with RFID key " + rfidKey + ".");
+                yield break;
             }
-            else
-            {
-                ldTime.PlaceObject(position, true, true);
-                p = lvlManager.getBackgroundObjectExactlyAtPosition(position);
-            }
+
             Vector3 scale = new Vector3(float.Parse(tokens[i++]), float.Parse(tokens[i++]), float.Parse(tokens[i++]));
             Resize r = p.second.GetComponent<Resize>();
             if(r != null)
