@@ -468,8 +468,10 @@ public class LevelDesignTIME : MonoBehaviour
         levelManager.executeActionQueue();
 	}
 
-	public void PlaceObject(Vector2 position, bool ignoreExisting = false, bool ignoreSnapToGrid = false)
+	public Pair<GameObject, GameObject> PlaceObject(Vector2 position, bool ignoreExisting = false, bool ignoreSnapToGrid = false)
 	{
+        Pair<GameObject, GameObject> p = null;
+
 		// Check if spot is free
 		if ((database[activeKey].first.tag == "PaintableBackground" && !levelManager.isBackgroundObjectAtPosition(position)) || 
 		    (database[activeKey].first.tag != "PaintableBackground" && !levelManager.isObjectAtPosition(position)) || 
@@ -478,11 +480,11 @@ public class LevelDesignTIME : MonoBehaviour
 			if(!ignoreSnapToGrid && snapToGrid)
 			{
 				Vector2 discretePos = new Vector2(SNAP_VALUE * Mathf.Round(position.x / SNAP_VALUE), SNAP_VALUE * Mathf.Round(position.y / SNAP_VALUE));
-				levelManager.placeObject(discretePos, database[activeKey].first, database[activeKey].second, this.transform);
+				p = levelManager.placeObject(discretePos, database[activeKey].first, database[activeKey].second, this.transform);
 			}
 			else
 			{
-				levelManager.placeObject(position, database[activeKey].first, database[activeKey].second, this.transform);
+				p = levelManager.placeObject(position, database[activeKey].first, database[activeKey].second, this.transform);
 			}
 		}
 		else
@@ -490,6 +492,8 @@ public class LevelDesignTIME : MonoBehaviour
 			// Ask user if they want to replace
 			print("Not free");
 		}
+
+        return p;
 	}
 	
 	public void RemoveObject(bool backgroundOnly)
