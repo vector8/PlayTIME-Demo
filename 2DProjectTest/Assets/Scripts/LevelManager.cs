@@ -75,7 +75,7 @@ public class LevelManager
                     newTar.targetAnimController = tar.targetAnimController;
                     newTar.includedTags = new List<string>(tar.includedTags);
                     newTar.excludedTags = new List<string>(tar.excludedTags);
-                    newTar.reversible = tar.reversible;
+                    newTar.repeatable = tar.repeatable;
                     newTar.id = tar.id;
                     newTar.done = false;
                     t.targetAndTags.Add(newTar);
@@ -105,6 +105,12 @@ public class LevelManager
         if(fp != null)
         {
             addResetListener(fp);
+        }
+
+        Invisible i = g.GetComponent<Invisible>();
+        if(i != null)
+        {
+            addResetListener(i);
         }
 	}
 
@@ -330,10 +336,20 @@ public class LevelManager
 		}
         spawnedObjects.Clear();
 
-		foreach(ICanReset r in resetListeners)
-		{
-			r.reset();
-		}
+        for (int i = 0; i < resetListeners.Count; i++ )
+        {
+            ICanReset r = resetListeners[i];
+
+            if (((MonoBehaviour)r) != null)
+            {
+                r.reset();
+            }
+            else
+            {
+                resetListeners.Remove(r);
+                i--;
+            }
+        }
 	}
 
 	public void revertObject(GameObject go)

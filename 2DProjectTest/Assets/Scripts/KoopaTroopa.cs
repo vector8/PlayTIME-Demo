@@ -8,12 +8,15 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
 	private Animator anim;
 	private MoveHorizontalUntilCollision mh;
 	private Damage d;
-	private float deathDelayTimer = 0;
-	private float reviveTimer = 0;
-	private float moveHorizOriginalSpeed;
+	private float deathDelayTimer = 0f;
+	private float reviveTimer = 0f;
+    private float kickDamageDelayTimer = 0f;
+    private float moveHorizOriginalSpeed;
 
 	private const float DEATH_DELAY = 0.5f;
 	private const float REVIVE_TIME = 5f;
+    private const float KICK_DAMAGE_DELAY = 0.5f;
+    private const float SHELL_MOVE_SPEED = 6f;
 
 	// Use this for initialization
 	void Start () 
@@ -57,6 +60,7 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
 				    if(reviveTimer >= REVIVE_TIME)
 				    {
 					    dead = false;
+                        deathDelayTimer = 0f;
 					    anim.SetBool("Dead", false);
 					    reviveTimer = 0f;
 					    mh.enabled = true;
@@ -72,7 +76,18 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
 		    }
 		    else if(kicked)
 		    {
-			    SpriteRenderer sr = GetComponent<SpriteRenderer>();
+                if (!d.enabled)
+                {
+                    kickDamageDelayTimer += Time.deltaTime;
+
+                    if (kickDamageDelayTimer >= KICK_DAMAGE_DELAY)
+                    {
+                        d.enabled = true;
+                        kickDamageDelayTimer = 0f;
+                    }
+                }
+
+                SpriteRenderer sr = GetComponent<SpriteRenderer>();
 			    if(!sr.isVisible)
 			    {
 				    gameObject.SetActive(false);
@@ -81,7 +96,7 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
         }
 	}
 
-	void OnCollisionEnter2D(Collision2D coll)
+	void OnCollisionStay2D(Collision2D coll)
 	{
 		if(coll.gameObject.tag == "Player")
 		{
@@ -103,10 +118,9 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
 			else if(deathDelayTimer >= DEATH_DELAY && !kicked)
 			{
 				mh.enabled = true;
-				mh.speed = 4f;
+                mh.speed = SHELL_MOVE_SPEED;
 				kicked = true;
 				anim.SetFloat("ReviveTimer", 0f);
-				d.enabled = true;
 				d.includedTags.Add("Enemy");
 			}
 		}
@@ -115,10 +129,15 @@ public class KoopaTroopa : MonoBehaviour, ICanReset
 	public void reset()
 	{
 		gameObject.SetActive(true);
-		kicked = false;
+        deathDelayTimer = 0f;
+        reviveTimer = 0f;
+        kickDamageDelayTimer = 0f;
+        kicked = false;
 		dead = false;
 		mh.enabled = true;
-		mh.speed = moveHorizOriginalSpeed;
+        mh.reset();
+        mh.speed = moveHorizOriginalSpeed;
+        mh.run();
 		anim.SetBool("Dead", false);
 		anim.SetFloat("ReviveTimer", 0f);
 		d.includedTags.Remove("Enemy");

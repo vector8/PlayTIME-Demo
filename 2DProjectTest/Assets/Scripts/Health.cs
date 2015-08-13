@@ -7,6 +7,7 @@ public class Health : MonoBehaviour
 {
 	public int hp, maxHP, startHP;
 	public int directions;
+    public float damageCooldown;
 
     public bool allowHeal = true, allowDamage = true;
 
@@ -27,7 +28,6 @@ public class Health : MonoBehaviour
 	public DeathActions da;
 
 	private float damageCooldownTimer;
-	private const float DAMAGE_COOLDOWN = 0.5f;
 	private float topAngle, sideAngle;
 	private static DeathActions maxDA = Enum.GetValues(typeof(DeathActions)).Cast<DeathActions>().Max();
 	
@@ -100,7 +100,7 @@ public class Health : MonoBehaviour
 			    Vector2.Angle(v, -transform.right) <= sideAngle && directionsInclude(directions, DamageDirections.Left))
 			{
 				hp -= dmg;
-				damageCooldownTimer = DAMAGE_COOLDOWN;
+                damageCooldownTimer = damageCooldown;
 				if(hp <= 0)
 				{
 					hp = 0;

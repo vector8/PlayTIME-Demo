@@ -51,6 +51,16 @@ public class CollideTrigger : MonoBehaviour
         triggerCollision(coll.gameObject);
 	}
 
+    void OnTriggerStay2D(Collider2D coll)
+    {
+        triggerCollision(coll.gameObject);
+    }
+
+    void OnCollisionStay2D(Collision2D coll)
+    {
+        triggerCollision(coll.gameObject);
+    }
+
     private void triggerCollision(GameObject other)
     {
         JustSpawned js = other.GetComponent<JustSpawned>();

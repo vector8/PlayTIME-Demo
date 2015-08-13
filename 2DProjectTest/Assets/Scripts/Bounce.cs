@@ -4,6 +4,7 @@ using System.Collections;
 public class Bounce : CustomAction
 {
     private Rigidbody2D rb;
+    private Animator anim;
 
     public float bounceHeight;
 
@@ -17,6 +18,19 @@ public class Bounce : CustomAction
             }
 
             rb.velocity = new Vector2(rb.velocity.x, bounceHeight);
+
+            if(anim == null)
+            {
+                anim = GetComponent<Animator>();
+            }
+
+            if(anim != null)
+            {
+                anim.logWarnings = false;
+                anim.SetBool("Jumping", true);
+                anim.SetBool("MidJump", true);
+                anim.logWarnings = true;
+            }
         }
     }
 

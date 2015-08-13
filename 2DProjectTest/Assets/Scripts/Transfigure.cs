@@ -8,7 +8,7 @@ public class TargetAnimControllerAndTags
 	public List<string> includedTags;
 	public List<string> excludedTags;
 	public bool done;
-	public bool reversible;
+	public bool repeatable;
 	public int id;
 
 	public bool isValidTag(string tag)
@@ -68,18 +68,16 @@ public class Transfigure : CustomAction
 	{
 		for(int i = 0; i < targetAndTags.Count; i++)
 		{
-			if(targetAndTags[i].id == id && ((!targetAndTags[i].done || targetAndTags[i].reversible) && targetAndTags[i].isValidTag(other.tag)))
+			if(targetAndTags[i].id == id && ((!targetAndTags[i].done || targetAndTags[i].repeatable) && targetAndTags[i].isValidTag(other.tag)))
 			{
-				if(!targetAndTags[i].done)
-				{
-					anim.runtimeAnimatorController = targetAndTags[i].targetAnimController;
-				}
-				else
-				{
-					anim.runtimeAnimatorController = originalAnimController;
-				}
-				
-				targetAndTags[i].done = !targetAndTags[i].done;
+                SpriteRenderer sr = GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.enabled = true;
+                }
+				anim.runtimeAnimatorController = targetAndTags[i].targetAnimController;
+
+                targetAndTags[i].done = true;
 			}
 		}
 	}
@@ -96,13 +94,13 @@ public class Transfigure : CustomAction
 		}
 	}
 
-	public void addTargetAnimControllerAndTags(string targetAnimControllerName, List<string> includedTags, List<string> excludedTags, bool reversible, int id)
+	public void addTargetAnimControllerAndTags(string targetAnimControllerName, List<string> includedTags, List<string> excludedTags, bool repeatable, int id)
 	{
 		TargetAnimControllerAndTags t = new TargetAnimControllerAndTags();
 		t.targetAnimController = Resources.Load<RuntimeAnimatorController>(targetAnimControllerName);
 		t.includedTags = new List<string>(includedTags);
 		t.excludedTags = new List<string>(excludedTags);
-		t.reversible = reversible;
+        t.repeatable = repeatable;
 		t.id = id;
 		t.done = false;
 		targetAndTags.Add(t);
