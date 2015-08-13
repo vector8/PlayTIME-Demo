@@ -50,7 +50,7 @@ public class LevelDesignTIME : MonoBehaviour
 
 	private Pair<GameObject, GameObject> lastObjectSelected = null;
 
-	private string[] testRFIDKeys = {"0a074861d4","c429534f5f","4d004aef91", "4d004ab4ee", "4d004aa4ee", "0a00ec698c", 
+    private string[] testRFIDKeys = {"4d004aa4ee", "2fa298c57b", "0a00ec698c", "c429534f5f", "4d004aef91", "4d004ab4ee",  
 		"4d004aef92", "4d004ab4ed", "3001ffcc05", "5e45686e2a", "9f4d96142f"};
 	private int testIndex = -1;
 
@@ -743,6 +743,7 @@ public class LevelDesignTIME : MonoBehaviour
 			{
 				h.setDeathAction(deathAction);
 			}
+            float.TryParse(data5, out h.damageCooldown);
 		}
 			break;
 		case "Resize":
@@ -829,9 +830,9 @@ public class LevelDesignTIME : MonoBehaviour
 				{
 					t = go.AddComponent<Transfigure>();
 				}
-				bool reversible;
-				Boolean.TryParse(data5, out reversible);
-				t.addTargetAnimControllerAndTags(data4, includedTags, excludedTags, reversible, ct.actions.Count);
+				bool repeatable;
+                Boolean.TryParse(data5, out repeatable);
+                t.addTargetAnimControllerAndTags(data4, includedTags, excludedTags, repeatable, ct.actions.Count);
 				ct.actions.Add(t);
 				ct.directions.Add(directions);
 			}
@@ -960,10 +961,10 @@ public class LevelDesignTIME : MonoBehaviour
 				{
 					t = go.AddComponent<Transfigure>();
 				}
-				bool reversible;
-				Boolean.TryParse(data5, out reversible);
+                bool repeatable;
+                Boolean.TryParse(data5, out repeatable);
 				List<string> tags = new List<string>();
-				t.addTargetAnimControllerAndTags(data4, tags, tags, reversible, tt.actions.Count);
+				t.addTargetAnimControllerAndTags(data4, tags, tags, repeatable, tt.actions.Count);
 				tt.actions.Add(t);
 				tt.originalTimes.Add(time);
 				tt.repeats.Add(repeats);
@@ -1041,11 +1042,8 @@ public class LevelDesignTIME : MonoBehaviour
 			break;
 		case "Invisible":
 		{
-			SpriteRenderer sr = go.GetComponent<SpriteRenderer>();
-			if(sr != null)
-			{
-				sr.enabled = false;
-			}
+            Invisible i = go.AddComponent<Invisible>();
+            i.reset();
 		}
 			break;
 		case "MoveHorizontalUntilCollision":
@@ -1078,7 +1076,7 @@ public class LevelDesignTIME : MonoBehaviour
             }
 
             int spawnCount = 0;
-            Int32.TryParse(data2, out spawnCount);
+            int.TryParse(data2, out spawnCount);
             s.setMaxSpawnCount(spawnCount);
         }
             break;
@@ -1122,6 +1120,37 @@ public class LevelDesignTIME : MonoBehaviour
                     staticChild.SetActive(true);
                 }
             }
+        }
+        break;
+        case "JumpAI":
+        {
+            go.AddComponent<JumpAI>();
+        }
+        break;
+        case "Chase":
+        {
+            go.AddComponent<Chase>();
+        }
+        break;
+        case "Shoot":
+        {
+            Shoot s = go.AddComponent<Shoot>();
+            string rfidKey = data1;
+
+            if (database.ContainsKey(rfidKey))
+            {
+                s.projectile = database[rfidKey].first;
+            }
+            else
+            {
+                string url = "http://" + databaseAddress + "/playtime/getComponents.php";
+                yield return StartCoroutine(pollDatabase(url, rfidKey, false));
+                if (database.ContainsKey(rfidKey))
+                {
+                    s.projectile = database[rfidKey].first;
+                }
+            }
+            float.TryParse(data2, out s.projectileSpeed);
         }
         break;
 		default:

@@ -52,7 +52,7 @@ public class Jump : MonoBehaviour
 		    if(jumped)
 		    {
 			    Rigidbody2D rb = gameObject.GetComponent<Rigidbody2D>();
-			    rb.AddRelativeForce(new Vector2(0f, burst), ForceMode2D.Impulse);
+                rb.velocity = new Vector2(rb.velocity.x, burst);
 			    jumped = false;
 		    }
         }
@@ -60,7 +60,9 @@ public class Jump : MonoBehaviour
 
 	void OnCollisionStay2D(Collision2D collision)
 	{
-		if(!canJump && jumpTimer <= 0)
+		Animator animator = GetComponent<Animator>();
+
+		if((!canJump || animator.GetBool("Jumping")) && jumpTimer <= 0)
 		{
 			Vector2 right = new Vector2(1f, 0f);
 
@@ -71,7 +73,6 @@ public class Jump : MonoBehaviour
 				if(contactDir.y < 0 && angle >= 45f && angle <= 135f)
 				{
 					canJump = true;
-					Animator animator = GetComponent<Animator>();
 					animator.SetBool("Jumping", false);
 					animator.SetBool("MidJump", false);
 					return;

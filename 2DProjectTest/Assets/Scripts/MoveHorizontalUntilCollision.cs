@@ -19,7 +19,11 @@ public class MoveHorizontalUntilCollision : CustomAction
 
 	public override void reset()
 	{
-		running = false;
+        direction = -1;
+        Vector3 scale = gameObject.transform.localScale;
+        scale.x = Mathf.Abs(scale.x);
+        gameObject.transform.localScale = scale;
+        running = false;
 		if(anim == null)
 		{
 			anim = GetComponent<Animator>();
