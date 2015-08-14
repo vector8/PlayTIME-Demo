@@ -26,6 +26,8 @@ public class LevelDesignTIME : MonoBehaviour
 	public SaveLoad saveLoad;
 	public GameObject cameraBtn, cameraPanel, cameraOutline;
 	public GameObject pentaArrow, bottomCamCanvas;
+
+    public Camera topCamera, bottomCamera;
 	
 	// Current or latest rfid tag read.
 	// Empty string means none active
@@ -471,11 +473,21 @@ public class LevelDesignTIME : MonoBehaviour
 	public Pair<GameObject, GameObject> PlaceObject(Vector2 position, bool ignoreExisting = false, bool ignoreSnapToGrid = false)
 	{
         Pair<GameObject, GameObject> p = null;
-
+        
+        if(database[activeKey].first.tag == "BackgroundColor")
+        {
+            ColorComponent c = database[activeKey].first.GetComponent<ColorComponent>();
+            if(c != null)
+            {
+                Color bgColor = new Color(c.r, c.g, c.b, c.a);
+                topCamera.backgroundColor = bgColor;
+                bottomCamera.backgroundColor = bgColor;
+            }
+        }
 		// Check if spot is free
-		if ((database[activeKey].first.tag == "PaintableBackground" && !levelManager.isBackgroundObjectAtPosition(position)) || 
-		    (database[activeKey].first.tag != "PaintableBackground" && !levelManager.isObjectAtPosition(position)) || 
-		    ignoreExisting)
+		else if ((database[activeKey].first.tag == "PaintableBackground" && !levelManager.isBackgroundObjectAtPosition(position)) || 
+		        (database[activeKey].first.tag != "PaintableBackground" && !levelManager.isObjectAtPosition(position)) || 
+		        ignoreExisting)
 		{
 			if(!ignoreSnapToGrid && snapToGrid)
 			{
@@ -1151,6 +1163,15 @@ public class LevelDesignTIME : MonoBehaviour
                 }
             }
             float.TryParse(data2, out s.projectileSpeed);
+        }
+        break;
+        case "Color":
+        {
+            ColorComponent c = go.AddComponent<ColorComponent>();
+            float.TryParse(data1, out c.r);
+            float.TryParse(data2, out c.g);
+            float.TryParse(data3, out c.b);
+            float.TryParse(data4, out c.a);
         }
         break;
 		default:
