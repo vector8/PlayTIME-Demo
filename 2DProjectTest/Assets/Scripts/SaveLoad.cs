@@ -16,11 +16,13 @@ public class SaveLoad : MonoBehaviour
 		StreamWriter writer = new StreamWriter(path);
 
         string entry = "";
+        // Camera positions
         entry = topCamera.transform.position.x + "," + topCamera.transform.position.y + "," + topCamera.transform.position.z + "," + topCamera.orthographicSize + ",";
         writer.WriteLine(entry);
         entry = bottomCamera.transform.position.x + "," + bottomCamera.transform.position.y + "," + bottomCamera.transform.position.z + ",";
         writer.WriteLine(entry);
 
+        // Camera follow target
         if(cameraControl.staticFollowTarget != null)
         {
             entry = cameraControl.staticFollowTarget.transform.position.x + "," + cameraControl.staticFollowTarget.transform.position.y + "," + cameraControl.staticFollowTarget.transform.position.z + ",";
@@ -32,12 +34,20 @@ public class SaveLoad : MonoBehaviour
         }
         writer.WriteLine(entry);
 
+        // Camera background colors
+        entry = topCamera.backgroundColor.r + "," + topCamera.backgroundColor.g + "," + topCamera.backgroundColor.b + "," + topCamera.backgroundColor.a + ",";
+        writer.WriteLine(entry);
+        entry = bottomCamera.backgroundColor.r + "," + topCamera.backgroundColor.g + "," + topCamera.backgroundColor.b + "," + topCamera.backgroundColor.a + ",";
+        writer.WriteLine(entry);
+
+        // Foreground objects
         for (int i = 0; i < lvlManager.staticPlacedObjects.Count; i++)
         {
             entry = getSaveEntryString(lvlManager.placedObjects[i], lvlManager.staticPlacedObjects[i]);
             writer.WriteLine(entry);
         }
 
+        // Background objects
         for (int i = 0; i < lvlManager.staticBackgroundPlacedObjects.Count; i++)
         {
             entry = getSaveEntryString(lvlManager.backgroundPlacedObjects[i], lvlManager.staticBackgroundPlacedObjects[i]);
@@ -70,6 +80,7 @@ public class SaveLoad : MonoBehaviour
             position = new Vector3(float.Parse(tokens[0]), float.Parse(tokens[1]), float.Parse(tokens[2]));
             bottomCamera.transform.position = position;
 
+            // Follow target
             entry = reader.ReadLine();
             tokens = entry.Split(delimiters, StringSplitOptions.None);
             bool camHasFollowTarget = tokens[0].Length > 0;
@@ -80,6 +91,17 @@ public class SaveLoad : MonoBehaviour
                 followOffset.x = float.Parse(tokens[3]);
                 followOffset.y = float.Parse(tokens[4]);
             }
+
+            // Camera background colors
+            entry = reader.ReadLine();
+            tokens = entry.Split(delimiters, StringSplitOptions.None);
+            Color c = new Color(float.Parse(tokens[0]), float.Parse(tokens[1]), float.Parse(tokens[2]), float.Parse(tokens[3]));
+            topCamera.backgroundColor = c;
+
+            entry = reader.ReadLine();
+            tokens = entry.Split(delimiters, StringSplitOptions.None);
+            c = new Color(float.Parse(tokens[0]), float.Parse(tokens[1]), float.Parse(tokens[2]), float.Parse(tokens[3]));
+            bottomCamera.backgroundColor = c;
 
             // Populate the level with all game objects
             while (reader.Peek() != -1)
