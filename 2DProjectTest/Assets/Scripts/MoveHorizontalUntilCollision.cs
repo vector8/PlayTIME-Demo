@@ -12,6 +12,8 @@ public class MoveHorizontalUntilCollision : CustomAction
 	private Animator anim;
 	private bool running = false;
 
+    private SpriteRenderer sr;
+
 	public override void run(GameObject other = null, int id = 0)
 	{
 		running = true;
@@ -37,12 +39,24 @@ public class MoveHorizontalUntilCollision : CustomAction
 	// Use this for initialization
 	void Start () 
 	{
+        sr = GetComponent<SpriteRenderer>();
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
-		if(running && !LevelManager.instance.paused)
+        bool visible = true;
+        
+        if(sr == null)
+        {
+            sr = GetComponent<SpriteRenderer>();
+        }
+        if(sr != null)
+        {
+            visible = sr.isVisible;
+        }
+
+		if(running && !LevelManager.instance.paused && visible)
 		{
 			if(anim == null)
 			{
